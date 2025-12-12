@@ -1,6 +1,6 @@
 import json
 import pandas as pd
-from config.constants import RAW_AUDIO_DATA_DIR, PROCESSED_AUDIO_DATA_DIR
+from config.constants import SEPARATED_AUDIO_DATA_DIR, PROCESSED_AUDIO_DATA_DIR
 
 
 def generate_instrument_csv():
@@ -15,10 +15,10 @@ def generate_instrument_csv():
     # The folders to iterate over
     folders = ['train', 'test', 'valid']
 
-    print(f"Scanning directories in {RAW_AUDIO_DATA_DIR}...")
+    print(f"Scanning directories in {SEPARATED_AUDIO_DATA_DIR}...")
 
     for folder in folders:
-        json_path = RAW_AUDIO_DATA_DIR / folder / "examples.json"
+        json_path = SEPARATED_AUDIO_DATA_DIR / folder / "examples.json"
 
         if not json_path.exists():
             print(f"Warning: {json_path} not found. Skipping.")
@@ -31,13 +31,11 @@ def generate_instrument_csv():
                 content = json.load(f)
 
             for filename_key, metadata in content.items():
-                source = metadata.get("instrument_source_str", "unknown")
-                family = metadata.get("instrument_family_str", "unknown")
-                class_name = f"{source} {family}"
+                label = metadata.get("instrument_family_str", "unknown")
 
                 data_records.append({
-                    "filename": filename_key,
-                    "class": class_name
+                    "filename": filename_key+'.wav',
+                    "label": label
                 })
 
         except json.JSONDecodeError:
@@ -51,3 +49,6 @@ def generate_instrument_csv():
     print(f"Total records: {len(df)}")
     print("\nPreview:")
     print(df.head())
+
+if __name__ == "__main__":
+    generate_instrument_csv()

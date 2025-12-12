@@ -1,1 +1,13 @@
+tqdm
 pandas
+numpy
+matplotlib
+scipy
+python_speech_features
+librosa
+# model
+tensorflow
+tensorflow_hub
+scikit-learn
+# visualisation
+seaborn
