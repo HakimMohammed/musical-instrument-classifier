@@ -15,3 +15,4 @@ __pycache__/
 .uvs/
 .python-version
 pyproject.toml
+uv.lock
