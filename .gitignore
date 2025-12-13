@@ -1,4 +1,18 @@
+.vscode/
+.DS_Store
+logs/
+.ipynb_checkpoints/
+
 .venv/
 
 models/
 data/
+
+__pycache__/
+
+# uv environment files
+.uv/
+.uvs/
+.python-version
+pyproject.toml
+uv.lock
