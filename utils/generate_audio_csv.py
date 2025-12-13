@@ -2,7 +2,6 @@ import json
 import pandas as pd
 from config.constants import SEPARATED_AUDIO_DATA_DIR, PROCESSED_AUDIO_DATA_DIR
 
-
 def generate_instrument_csv():
     output_csv_path = PROCESSED_AUDIO_DATA_DIR / "instruments.csv"
 
