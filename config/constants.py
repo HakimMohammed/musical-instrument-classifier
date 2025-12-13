@@ -20,6 +20,8 @@ CLEANED_IMAGE_DATA_DIR = PROCESSED_IMAGE_DATA_DIR / "clean"
 
 # -- Models
 MODELS_DIR = ROOT_DIR / "models"
+IMAGE_MODELS_DIR = MODELS_DIR / "image"
+AUDIO_MODELS_DIR = MODELS_DIR / "audio"
 
 # -- Data Cleaning
 THRESHOLD= 0.03
