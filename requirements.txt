@@ -12,3 +12,5 @@ scikit-learn
 # visualisation
 seaborn
 opencv-python
+# api
+fastapi[standard]
