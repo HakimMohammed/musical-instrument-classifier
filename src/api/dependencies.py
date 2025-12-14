@@ -22,8 +22,10 @@ class ModelManager:
             self.image_model = tf.keras.models.load_model(IMAGE_MODEL_PATH)
             with open(IMAGE_INDICES_PATH, 'rb') as f:
                 self.image_indices = pickle.load(f)
-            # Invert indices: {0: 'guitar'} -> {0: 'guitar'} (Wait, usually it's {'guitar': 0})
-            # We need index -> label
+            
+            # Invert indices to map Model Output Index -> Class Name
+            # Loaded: {'guitar': 0, 'piano': 1}
+            # Needed: {0: 'guitar', 1: 'piano'}
             self.image_labels = {v: k for k, v in self.image_indices.items()}
             print("✅ Image model loaded.")
         except Exception as e:
