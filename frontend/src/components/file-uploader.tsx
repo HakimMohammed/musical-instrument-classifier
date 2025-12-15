@@ -1,0 +1,108 @@
+import { useCallback } from 'react'
+import type { DropzoneOptions } from 'react-dropzone'
+import { useDropzone } from 'react-dropzone'
+import { Upload, FileAudio, X } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+
+interface FileUploaderProps {
+    onFilesSelected: (files: File[]) => void
+    accept: DropzoneOptions['accept']
+    maxFiles?: number
+    disabled?: boolean
+    className?: string
+}
+
+export function FileUploader({
+    onFilesSelected,
+    accept,
+    maxFiles = 1,
+    disabled = false,
+    className,
+}: FileUploaderProps) {
+    const onDrop = useCallback(
+        (acceptedFiles: File[]) => {
+            onFilesSelected(acceptedFiles)
+        },
+        [onFilesSelected]
+    )
+
+    const { getRootProps, getInputProps, isDragActive, isDragReject } = useDropzone({
+        onDrop,
+        accept,
+        maxFiles,
+        disabled,
+    })
+
+    return (
+        <div
+            {...getRootProps()}
+            className={cn(
+                'relative flex flex-col items-center justify-center w-full rounded-lg border-2 border-dashed border-muted-foreground/25 p-12 text-center transition-all hover:bg-muted/50 cursor-pointer',
+                isDragActive && 'border-primary bg-primary/5',
+                isDragReject && 'border-destructive bg-destructive/5',
+                disabled && 'opacity-50 cursor-not-allowed hover:bg-transparent',
+                className
+            )}
+        >
+            <input {...getInputProps()} />
+            <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                <div className="p-4 rounded-full bg-muted">
+                    <Upload className="w-8 h-8" />
+                </div>
+                <div className="flex flex-col gap-1">
+                    <p className="text-lg font-medium text-foreground">
+                        {isDragActive
+                            ? 'Drop the files here'
+                            : 'Drag & drop files here, or click to select'}
+                    </p>
+                    <p className="text-sm">
+                        Supported formats: {Object.keys(accept || {}).join(', ')}
+                    </p>
+                </div>
+            </div>
+        </div>
+    )
+}
+
+interface FilePreviewProps {
+    file: File
+    onRemove?: () => void
+}
+
+export function FilePreview({ file, onRemove }: FilePreviewProps) {
+    const isImage = file.type.startsWith('image/')
+
+    return (
+        <Card className="flex items-center gap-4 p-4 mt-4 relative overflow-hidden">
+            <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-muted shrink-0">
+                {isImage ? (
+                    <img
+                        src={URL.createObjectURL(file)}
+                        alt="Preview"
+                        className="w-full h-full object-cover rounded-lg"
+                    />
+                ) : (
+                    <FileAudio className="w-6 h-6 text-muted-foreground" />
+                )}
+            </div>
+            <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">{file.name}</p>
+                <p className="text-xs text-muted-foreground">
+                    {(file.size / 1024 / 1024).toFixed(2)} MB
+                </p>
+            </div>
+            {onRemove && (
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="shrink-0 text-muted-foreground hover:text-foreground"
+                    onClick={onRemove}
+                >
+                    <X className="w-4 h-4" />
+                </Button>
+            )}
+        </Card>
+    )
+}
