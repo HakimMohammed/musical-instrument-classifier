@@ -90,7 +90,7 @@ function App() {
                   <CardTitle>Classify Single Image</CardTitle>
                   <CardDescription>
                     Upload an image (JPG, PNG, WebP) to identify the instrument.
-                    Max 10MB.
+                    Max 50MB.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -168,7 +168,7 @@ function App() {
                   <CardTitle>Classify Single Audio</CardTitle>
                   <CardDescription>
                     Upload an audio file (WAV, MP3, OGG) to identify the
-                    instrument. Max 10MB.
+                    instrument. Max 50MB.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -233,7 +233,7 @@ function App() {
                   <CardTitle>Batch Image Classification</CardTitle>
                   <CardDescription>
                     Upload multiple images to classify them at once. Max 50
-                    files, 10MB each.
+                    files, 50MB each.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -310,7 +310,7 @@ function App() {
                   <CardTitle>Batch Audio Classification</CardTitle>
                   <CardDescription>
                     Upload multiple audio files to classify them at once. Max 50
-                    files, 10MB each.
+                    files, 50MB each.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">

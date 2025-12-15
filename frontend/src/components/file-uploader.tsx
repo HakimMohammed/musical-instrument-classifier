@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/card";
 import { AudioPreview } from "@/components/audio-preview";
 import { toast } from "sonner";
 
-const MAX_FILE_SIZE_MB = 10;
+const MAX_FILE_SIZE_MB = 50;
 
 // Helper component for image preview - uses ref-based URL management to avoid
 // React Strict Mode double-render issues where URL gets revoked before image loads
