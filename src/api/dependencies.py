@@ -19,7 +19,7 @@ class ModelManager:
         
         # 1. Load Image Model & Indices
         try:
-            self.image_model = tf.keras.models.load_model(IMAGE_MODEL_PATH)
+            self.image_model = tf.keras.models.load_model(IMAGE_MODEL_PATH, compile=False)
             with open(IMAGE_INDICES_PATH, 'rb') as f:
                 self.image_indices = pickle.load(f)
             
@@ -34,7 +34,7 @@ class ModelManager:
 
         # 2. Load Audio Model, Label Encoder, Scaler
         try:
-            self.audio_model = tf.keras.models.load_model(AUDIO_MODEL_PATH)
+            self.audio_model = tf.keras.models.load_model(AUDIO_MODEL_PATH, compile=False)
             
             with open(AUDIO_LABEL_ENCODER_PATH, 'rb') as f:
                 self.audio_label_encoder = pickle.load(f)
