@@ -69,11 +69,81 @@ export function FileUploader({
 interface FilePreviewProps {
     file: File
     onRemove?: () => void
+    viewMode?: 'list' | 'large' | 'grid'
 }
 
-export function FilePreview({ file, onRemove }: FilePreviewProps) {
+export function FilePreview({ file, onRemove, viewMode = 'list' }: FilePreviewProps) {
     const isImage = file.type.startsWith('image/')
 
+    if (viewMode === 'large') {
+        return (
+            <Card className="relative overflow-hidden group">
+                <div className="w-full bg-muted/20 flex items-center justify-center overflow-hidden p-4">
+                    {isImage ? (
+                        <img
+                            src={URL.createObjectURL(file)}
+                            alt="Preview"
+                            className="w-full h-auto max-h-[60vh] object-contain rounded shadow-sm"
+                        />
+                    ) : (
+                        <FileAudio className="w-24 h-24 text-muted-foreground" />
+                    )}
+                </div>
+                <div className="p-4 flex items-center justify-between border-t">
+                    <div className="min-w-0">
+                        <p className="font-medium truncate text-lg">{file.name}</p>
+                        <p className="text-sm text-muted-foreground">
+                            {(file.size / 1024 / 1024).toFixed(2)} MB
+                        </p>
+                    </div>
+                    {onRemove && (
+                        <Button
+                            variant="destructive"
+                            size="icon"
+                            onClick={onRemove}
+                        >
+                            <X className="w-5 h-5" />
+                        </Button>
+                    )}
+                </div>
+            </Card>
+        )
+    }
+
+    if (viewMode === 'grid') {
+        return (
+            <Card className="relative overflow-hidden group hover:ring-2 hover:ring-primary transition-all flex flex-col shrink-0">
+                <div className="p-2 flex-grow flex items-center justify-center bg-muted/20 min-h-[150px]">
+                    {isImage ? (
+                        <img
+                            src={URL.createObjectURL(file)}
+                            alt="Preview"
+                            className="h-40 w-auto object-contain rounded"
+                        />
+                    ) : (
+                        <FileAudio className="w-12 h-12 text-muted-foreground" />
+                    )}
+                </div>
+                <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    {onRemove && (
+                        <Button
+                            variant="destructive"
+                            size="icon"
+                            className="h-6 w-6 rounded-full"
+                            onClick={onRemove}
+                        >
+                            <X className="w-3 h-3" />
+                        </Button>
+                    )}
+                </div>
+                <div className="p-2 border-t">
+                    <p className="text-xs font-medium truncate max-w-[150px]">{file.name}</p>
+                </div>
+            </Card>
+        )
+    }
+
+    // List mode (default)
     return (
         <Card className="flex items-center gap-4 p-4 mt-4 relative overflow-hidden">
             <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-muted shrink-0">

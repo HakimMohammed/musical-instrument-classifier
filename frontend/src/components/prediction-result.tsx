@@ -6,21 +6,23 @@ import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Button } from '@/components/ui/button'
 import type { PredictionResult } from '@/lib/api'
+import { cn } from '@/lib/utils'
 
 interface PredictionCardProps {
     result: PredictionResult
     file?: File | null
+    className?: string
 }
 
-export function PredictionCard({ result, file }: PredictionCardProps) {
+export function PredictionCard({ result, file, className }: PredictionCardProps) {
     const isAudio = result.media_type === 'audio'
     const confidencePercent = Math.round(result.confidence * 100)
 
     return (
-        <Card className="w-full max-w-md mx-auto mt-6">
+        <Card className={cn("w-full overflow-hidden", className)}>
             <CardHeader>
-                <CardTitle className="flex justify-between items-center">
-                    <span>Prediction Result</span>
+                <CardTitle className="flex justify-between items-center text-lg">
+                    <span className="truncate mr-2">Prediction Result</span>
                     <Badge variant={confidencePercent > 80 ? 'default' : 'secondary'}>
                         {confidencePercent}% Confidence
                     </Badge>
@@ -53,7 +55,7 @@ export function PredictionCard({ result, file }: PredictionCardProps) {
                         <img
                             src={URL.createObjectURL(file)}
                             alt="Uploaded Instrument"
-                            className="w-full h-48 object-cover"
+                            className="w-full h-auto"
                         />
                     </div>
                 )}

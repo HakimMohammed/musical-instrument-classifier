@@ -51,7 +51,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-background p-8 font-sans">
-      <div className="max-w-4xl mx-auto space-y-8">
+      <div className="max-w-5xl mx-auto space-y-8">
         <div className="text-center space-y-2">
           <h1 className="text-4xl font-extrabold tracking-tight lg:text-5xl text-primary flex items-center justify-center gap-3">
             <Music className="w-10 h-10" />
@@ -78,28 +78,32 @@ function App() {
                 <CardDescription>Upload an image (JPG, PNG) to identify the instrument.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                {!selectedFile && !imageMutation.data ? (
-                  <FileUploader
-                    accept={{ 'image/*': ['.png', '.jpg', '.jpeg', '.webp'] }}
-                    onFilesSelected={(files) => {
-                      setSelectedFile(files[0])
-                      imageMutation.mutate(files[0])
-                    }}
-                  />
-                ) : (
+                {imageMutation.data ? (
                   <div className="space-y-4">
-                    {selectedFile && <FilePreview file={selectedFile} onRemove={handleReset} />}
-
-                    {imageMutation.isPending && (
-                      <div className="text-center py-8 text-muted-foreground animate-pulse">
-                        Analyzing image...
-                      </div>
+                    <PredictionCard
+                      result={imageMutation.data}
+                      file={selectedFile}
+                      className="max-w-md mx-auto mt-6"
+                    />
+                    <Button onClick={handleReset} variant="outline" className="w-full max-w-md mx-auto block">Analyze Another</Button>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    {!selectedFile && (
+                      <FileUploader
+                        accept={{ 'image/*': ['.png', '.jpg', '.jpeg', '.webp'] }}
+                        onFilesSelected={(files) => {
+                          setSelectedFile(files[0])
+                          imageMutation.mutate(files[0])
+                        }}
+                      />
                     )}
 
-                    {imageMutation.data && (
-                      <div className="space-y-4">
-                        <PredictionCard result={imageMutation.data} file={selectedFile} />
-                        <Button onClick={handleReset} variant="outline" className="w-full">Analyze Another</Button>
+                    {selectedFile && <FilePreview file={selectedFile} onRemove={handleReset} viewMode="large" />}
+
+                    {imageMutation.isPending && (
+                      <div className="text-center py-4 text-muted-foreground animate-pulse">
+                        Analyzing image...
                       </div>
                     )}
                   </div>
@@ -136,8 +140,12 @@ function App() {
 
                     {audioMutation.data && (
                       <div className="space-y-4">
-                        <PredictionCard result={audioMutation.data} file={selectedFile} />
-                        <Button onClick={handleReset} variant="outline" className="w-full">Analyze Another</Button>
+                        <PredictionCard
+                          result={audioMutation.data}
+                          file={selectedFile}
+                          className="max-w-md mx-auto mt-6"
+                        />
+                        <Button onClick={handleReset} variant="outline" className="w-full max-w-md mx-auto block">Analyze Another</Button>
                       </div>
                     )}
                   </div>
@@ -154,27 +162,46 @@ function App() {
                 <CardDescription>Upload multiple images to classify them at once.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                {batchFiles.length === 0 && !batchImageMutation.data ? (
-                  <FileUploader
-                    accept={{ 'image/*': ['.png', '.jpg', '.jpeg', '.webp'] }}
-                    maxFiles={50}
-                    onFilesSelected={(files) => {
-                      setBatchFiles(files)
-                      batchImageMutation.mutate(files)
-                    }}
-                  />
-                ) : (
+                {batchImageMutation.data ? (
                   <div className="space-y-4">
-                    {batchImageMutation.isPending && (
-                      <div className="text-center py-8 text-muted-foreground animate-pulse">
-                        Processing {batchFiles.length} images...
-                      </div>
-                    )}
-
-                    {batchImageMutation.data && (
+                    <BatchResults data={batchImageMutation.data} files={batchFiles} />
+                    <Button onClick={handleReset} variant="outline" className="w-full">Process More</Button>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    {batchFiles.length === 0 ? (
+                      <FileUploader
+                        accept={{ 'image/*': ['.png', '.jpg', '.jpeg', '.webp'] }}
+                        maxFiles={50}
+                        onFilesSelected={(files) => {
+                          setBatchFiles(files)
+                          batchImageMutation.mutate(files)
+                        }}
+                      />
+                    ) : (
                       <div className="space-y-4">
-                        <BatchResults data={batchImageMutation.data} />
-                        <Button onClick={handleReset} variant="outline" className="w-full">Process More</Button>
+                        <div className="flex flex-wrap gap-4 justify-center">
+                          {batchFiles.map((file, i) => (
+                            <FilePreview
+                              key={i}
+                              file={file}
+                              viewMode="grid"
+                              onRemove={() => {
+                                const newFiles = [...batchFiles];
+                                newFiles.splice(i, 1);
+                                setBatchFiles(newFiles);
+                                if (newFiles.length === 0) {
+                                  batchImageMutation.reset();
+                                }
+                              }}
+                            />
+                          ))}
+                        </div>
+                        {batchImageMutation.isPending && (
+                          <div className="text-center py-8 text-muted-foreground animate-pulse">
+                            Processing {batchFiles.length} images...
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
@@ -202,6 +229,23 @@ function App() {
                   />
                 ) : (
                   <div className="space-y-4">
+                    {!batchAudioMutation.data && (
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        {batchFiles.map((file, i) => (
+                          <FilePreview
+                            key={i}
+                            file={file}
+                            viewMode="list"
+                            onRemove={() => {
+                              const newFiles = [...batchFiles];
+                              newFiles.splice(i, 1);
+                              setBatchFiles(newFiles);
+                            }}
+                          />
+                        ))}
+                      </div>
+                    )}
+
                     {batchAudioMutation.isPending && (
                       <div className="text-center py-8 text-muted-foreground animate-pulse">
                         Processing {batchFiles.length} audio clips...
@@ -210,7 +254,7 @@ function App() {
 
                     {batchAudioMutation.data && (
                       <div className="space-y-4">
-                        <BatchResults data={batchAudioMutation.data} />
+                        <BatchResults data={batchAudioMutation.data} files={batchFiles} />
                         <Button onClick={handleReset} variant="outline" className="w-full">Process More</Button>
                       </div>
                     )}
