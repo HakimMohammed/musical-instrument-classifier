@@ -1,273 +1,387 @@
-import { useState } from 'react'
-import { useMutation } from '@tanstack/react-query'
-import { toast } from 'sonner'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { FileUploader, FilePreview } from '@/components/file-uploader'
-import { PredictionCard } from '@/components/prediction-result'
-import { BatchResults } from '@/components/batch-results'
-import { predictImage, predictAudio, batchPredictImage, batchPredictAudio } from '@/lib/api'
-import { Music, ImageIcon, Layers } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { FileUploader, FilePreview } from "@/components/file-uploader";
+import { PredictionCard } from "@/components/prediction-result";
+import { BatchResults } from "@/components/batch-results";
+import { ThemeToggle } from "@/components/theme-toggle";
+import {
+  PredictionSkeleton,
+  AudioPredictionSkeleton,
+  BatchResultsSkeleton,
+} from "@/components/loading-skeleton";
+import {
+  useImageClassifier,
+  useAudioClassifier,
+  useBatchImageClassifier,
+  useBatchAudioClassifier,
+} from "@/hooks/useClassifier";
+import { Music, ImageIcon, Layers, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 function App() {
-  const [selectedFile, setSelectedFile] = useState<File | null>(null)
-  const [batchFiles, setBatchFiles] = useState<File[]>([])
+  // Use custom hooks for each classifier type
+  const imageClassifier = useImageClassifier();
+  const audioClassifier = useAudioClassifier();
+  const batchImageClassifier = useBatchImageClassifier();
+  const batchAudioClassifier = useBatchAudioClassifier();
 
-  // Single Mutations
-  const imageMutation = useMutation({
-    mutationFn: predictImage,
-    onSuccess: () => toast.success('Image processed successfully'),
-    onError: (error) => toast.error(`Error processing image: ${error.message}`),
-  })
-
-  const audioMutation = useMutation({
-    mutationFn: predictAudio,
-    onSuccess: () => toast.success('Audio processed successfully'),
-    onError: (error) => toast.error(`Error processing audio: ${error.message}`),
-  })
-
-  // Batch Mutations
-  const batchImageMutation = useMutation({
-    mutationFn: batchPredictImage,
-    onSuccess: () => toast.success('Batch processing complete'),
-    onError: (error) => toast.error(`Error in batch processing: ${error.message}`),
-  })
-
-  const batchAudioMutation = useMutation({
-    mutationFn: batchPredictAudio,
-    onSuccess: () => toast.success('Batch processing complete'),
-    onError: (error) => toast.error(`Error in batch processing: ${error.message}`),
-  })
-
-  const handleReset = () => {
-    setSelectedFile(null)
-    setBatchFiles([])
-    imageMutation.reset()
-    audioMutation.reset()
-    batchImageMutation.reset()
-    batchAudioMutation.reset()
-  }
+  const handleTabChange = () => {
+    imageClassifier.reset();
+    audioClassifier.reset();
+    batchImageClassifier.reset();
+    batchAudioClassifier.reset();
+  };
 
   return (
     <div className="min-h-screen bg-background p-8 font-sans">
+      <ThemeToggle />
+
       <div className="max-w-5xl mx-auto space-y-8">
-        <div className="text-center space-y-2">
+        <header className="text-center space-y-2">
           <h1 className="text-4xl font-extrabold tracking-tight lg:text-5xl text-primary flex items-center justify-center gap-3">
-            <Music className="w-10 h-10" />
+            <Music className="w-10 h-10" aria-hidden="true" />
             Instrument Classifier
           </h1>
           <p className="text-xl text-muted-foreground">
-            Identify musical instruments from images and audio recordings using AI.
+            Identify musical instruments from images and audio recordings using
+            AI.
           </p>
-        </div>
+        </header>
 
-        <Tabs defaultValue="image" className="space-y-6" onValueChange={handleReset}>
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="image" className="gap-2"><ImageIcon className="w-4 h-4" /> Image</TabsTrigger>
-            <TabsTrigger value="audio" className="gap-2"><Music className="w-4 h-4" /> Audio</TabsTrigger>
-            <TabsTrigger value="batch-image" className="gap-2"><Layers className="w-4 h-4" /> Batch Images</TabsTrigger>
-            <TabsTrigger value="batch-audio" className="gap-2"><Layers className="w-4 h-4" /> Batch Audio</TabsTrigger>
-          </TabsList>
+        <main>
+          <Tabs
+            defaultValue="image"
+            className="space-y-6"
+            onValueChange={handleTabChange}
+          >
+            <TabsList
+              className="grid w-full grid-cols-4"
+              aria-label="Classification modes"
+            >
+              <TabsTrigger value="image" className="gap-2">
+                <ImageIcon className="w-4 h-4" aria-hidden="true" />
+                <span className="hidden sm:inline">Image</span>
+              </TabsTrigger>
+              <TabsTrigger value="audio" className="gap-2">
+                <Music className="w-4 h-4" aria-hidden="true" />
+                <span className="hidden sm:inline">Audio</span>
+              </TabsTrigger>
+              <TabsTrigger value="batch-image" className="gap-2">
+                <Layers className="w-4 h-4" aria-hidden="true" />
+                <span className="hidden sm:inline">Batch Images</span>
+              </TabsTrigger>
+              <TabsTrigger value="batch-audio" className="gap-2">
+                <Layers className="w-4 h-4" aria-hidden="true" />
+                <span className="hidden sm:inline">Batch Audio</span>
+              </TabsTrigger>
+            </TabsList>
 
-          {/* Single Image Tab */}
-          <TabsContent value="image" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Classify Single Image</CardTitle>
-                <CardDescription>Upload an image (JPG, PNG) to identify the instrument.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {imageMutation.data ? (
-                  <div className="space-y-4">
-                    <PredictionCard
-                      result={imageMutation.data}
-                      file={selectedFile}
-                      className="max-w-md mx-auto mt-6"
-                    />
-                    <Button onClick={handleReset} variant="outline" className="w-full max-w-md mx-auto block">Analyze Another</Button>
-                  </div>
-                ) : (
-                  <div className="space-y-6">
-                    {!selectedFile && (
-                      <FileUploader
-                        accept={{ 'image/*': ['.png', '.jpg', '.jpeg', '.webp'] }}
-                        onFilesSelected={(files) => {
-                          setSelectedFile(files[0])
-                          imageMutation.mutate(files[0])
-                        }}
+            {/* Single Image Tab */}
+            <TabsContent value="image" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Classify Single Image</CardTitle>
+                  <CardDescription>
+                    Upload an image (JPG, PNG, WebP) to identify the instrument.
+                    Max 10MB.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {imageClassifier.isError && (
+                    <Alert variant="destructive">
+                      <AlertDescription className="flex items-center justify-between">
+                        <span>Failed to process image. Please try again.</span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={imageClassifier.retry}
+                          className="gap-2"
+                        >
+                          <RefreshCw className="w-4 h-4" /> Retry
+                        </Button>
+                      </AlertDescription>
+                    </Alert>
+                  )}
+
+                  {imageClassifier.result ? (
+                    <div className="space-y-4">
+                      <PredictionCard
+                        result={imageClassifier.result}
+                        file={imageClassifier.selectedFile}
+                        className="max-w-md mx-auto mt-6"
                       />
-                    )}
-
-                    {selectedFile && <FilePreview file={selectedFile} onRemove={handleReset} viewMode="large" />}
-
-                    {imageMutation.isPending && (
-                      <div className="text-center py-4 text-muted-foreground animate-pulse">
-                        Analyzing image...
-                      </div>
-                    )}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Single Audio Tab */}
-          <TabsContent value="audio" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Classify Single Audio</CardTitle>
-                <CardDescription>Upload an audio file (WAV, MP3) to identify the instrument.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {!selectedFile && !audioMutation.data ? (
-                  <FileUploader
-                    accept={{ 'audio/*': ['.wav', '.mp3', '.ogg'] }}
-                    onFilesSelected={(files) => {
-                      setSelectedFile(files[0])
-                      audioMutation.mutate(files[0])
-                    }}
-                  />
-                ) : (
-                  <div className="space-y-4">
-                    {selectedFile && <FilePreview file={selectedFile} onRemove={handleReset} />}
-
-                    {audioMutation.isPending && (
-                      <div className="text-center py-8 text-muted-foreground animate-pulse">
-                        Listening to audio...
-                      </div>
-                    )}
-
-                    {audioMutation.data && (
-                      <div className="space-y-4">
-                        <PredictionCard
-                          result={audioMutation.data}
-                          file={selectedFile}
-                          className="max-w-md mx-auto mt-6"
+                      <Button
+                        onClick={imageClassifier.reset}
+                        variant="outline"
+                        className="w-full max-w-md mx-auto block"
+                      >
+                        Analyze Another
+                      </Button>
+                    </div>
+                  ) : imageClassifier.isPending ? (
+                    <div className="space-y-6">
+                      {imageClassifier.selectedFile && (
+                        <FilePreview
+                          file={imageClassifier.selectedFile}
+                          viewMode="large"
                         />
-                        <Button onClick={handleReset} variant="outline" className="w-full max-w-md mx-auto block">Analyze Another</Button>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+                      )}
+                      <PredictionSkeleton />
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
+                      {!imageClassifier.selectedFile && (
+                        <FileUploader
+                          accept={{
+                            "image/*": [".png", ".jpg", ".jpeg", ".webp"],
+                          }}
+                          onFilesSelected={(files) =>
+                            imageClassifier.classify(files[0])
+                          }
+                          showPreview
+                        />
+                      )}
+                      {imageClassifier.selectedFile && (
+                        <FilePreview
+                          file={imageClassifier.selectedFile}
+                          onRemove={imageClassifier.reset}
+                          viewMode="large"
+                        />
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-          {/* Batch Image Tab */}
-          <TabsContent value="batch-image" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Batch Image Classification</CardTitle>
-                <CardDescription>Upload multiple images to classify them at once.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {batchImageMutation.data ? (
-                  <div className="space-y-4">
-                    <BatchResults data={batchImageMutation.data} files={batchFiles} />
-                    <Button onClick={handleReset} variant="outline" className="w-full">Process More</Button>
-                  </div>
-                ) : (
-                  <div className="space-y-6">
-                    {batchFiles.length === 0 ? (
-                      <FileUploader
-                        accept={{ 'image/*': ['.png', '.jpg', '.jpeg', '.webp'] }}
-                        maxFiles={50}
-                        onFilesSelected={(files) => {
-                          setBatchFiles(files)
-                          batchImageMutation.mutate(files)
-                        }}
+            {/* Single Audio Tab */}
+            <TabsContent value="audio" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Classify Single Audio</CardTitle>
+                  <CardDescription>
+                    Upload an audio file (WAV, MP3, OGG) to identify the
+                    instrument. Max 10MB.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {audioClassifier.isError && (
+                    <Alert variant="destructive">
+                      <AlertDescription className="flex items-center justify-between">
+                        <span>Failed to process audio. Please try again.</span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={audioClassifier.retry}
+                          className="gap-2"
+                        >
+                          <RefreshCw className="w-4 h-4" /> Retry
+                        </Button>
+                      </AlertDescription>
+                    </Alert>
+                  )}
+
+                  {audioClassifier.result ? (
+                    <div className="space-y-4">
+                      <PredictionCard
+                        result={audioClassifier.result}
+                        file={audioClassifier.selectedFile}
+                        className="max-w-md mx-auto mt-6"
                       />
-                    ) : (
-                      <div className="space-y-4">
-                        <div className="flex flex-wrap gap-4 justify-center">
-                          {batchFiles.map((file, i) => (
-                            <FilePreview
-                              key={i}
-                              file={file}
-                              viewMode="grid"
-                              onRemove={() => {
-                                const newFiles = [...batchFiles];
-                                newFiles.splice(i, 1);
-                                setBatchFiles(newFiles);
-                                if (newFiles.length === 0) {
-                                  batchImageMutation.reset();
-                                }
-                              }}
-                            />
-                          ))}
-                        </div>
-                        {batchImageMutation.isPending && (
-                          <div className="text-center py-8 text-muted-foreground animate-pulse">
-                            Processing {batchFiles.length} images...
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+                      <Button
+                        onClick={audioClassifier.reset}
+                        variant="outline"
+                        className="w-full max-w-md mx-auto block"
+                      >
+                        Analyze Another
+                      </Button>
+                    </div>
+                  ) : audioClassifier.isPending ? (
+                    <div className="space-y-6">
+                      {audioClassifier.selectedFile && (
+                        <FilePreview
+                          file={audioClassifier.selectedFile}
+                          viewMode="large"
+                        />
+                      )}
+                      <AudioPredictionSkeleton />
+                    </div>
+                  ) : (
+                    <FileUploader
+                      accept={{ "audio/*": [".wav", ".mp3", ".ogg"] }}
+                      onFilesSelected={(files) =>
+                        audioClassifier.classify(files[0])
+                      }
+                      showPreview
+                    />
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-          {/* Batch Audio Tab */}
-          <TabsContent value="batch-audio" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Batch Audio Classification</CardTitle>
-                <CardDescription>Upload multiple audio files to classify them at once.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {batchFiles.length === 0 && !batchAudioMutation.data ? (
-                  <FileUploader
-                    accept={{ 'audio/*': ['.wav', '.mp3', '.ogg'] }}
-                    maxFiles={50}
-                    onFilesSelected={(files) => {
-                      setBatchFiles(files)
-                      batchAudioMutation.mutate(files)
-                    }}
-                  />
-                ) : (
-                  <div className="space-y-4">
-                    {!batchAudioMutation.data && (
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                        {batchFiles.map((file, i) => (
+            {/* Batch Image Tab */}
+            <TabsContent value="batch-image" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Batch Image Classification</CardTitle>
+                  <CardDescription>
+                    Upload multiple images to classify them at once. Max 50
+                    files, 10MB each.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {batchImageClassifier.isError && (
+                    <Alert variant="destructive">
+                      <AlertDescription className="flex items-center justify-between">
+                        <span>Batch processing failed. Please try again.</span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={batchImageClassifier.retry}
+                          className="gap-2"
+                        >
+                          <RefreshCw className="w-4 h-4" /> Retry
+                        </Button>
+                      </AlertDescription>
+                    </Alert>
+                  )}
+
+                  {batchImageClassifier.result ? (
+                    <div className="space-y-4">
+                      <BatchResults
+                        data={batchImageClassifier.result}
+                        files={batchImageClassifier.files}
+                      />
+                      <Button
+                        onClick={batchImageClassifier.reset}
+                        variant="outline"
+                        className="w-full"
+                      >
+                        Process More
+                      </Button>
+                    </div>
+                  ) : batchImageClassifier.isPending ? (
+                    <div className="space-y-6">
+                      <div className="flex flex-wrap gap-4 justify-center">
+                        {batchImageClassifier.files.map((file, i) => (
+                          <FilePreview key={i} file={file} viewMode="grid" />
+                        ))}
+                      </div>
+                      <BatchResultsSkeleton
+                        count={Math.min(batchImageClassifier.files.length, 4)}
+                      />
+                    </div>
+                  ) : batchImageClassifier.files.length === 0 ? (
+                    <FileUploader
+                      accept={{ "image/*": [".png", ".jpg", ".jpeg", ".webp"] }}
+                      maxFiles={50}
+                      onFilesSelected={batchImageClassifier.classify}
+                      showPreview
+                    />
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="flex flex-wrap gap-4 justify-center">
+                        {batchImageClassifier.files.map((file, i) => (
                           <FilePreview
                             key={i}
                             file={file}
-                            viewMode="list"
-                            onRemove={() => {
-                              const newFiles = [...batchFiles];
-                              newFiles.splice(i, 1);
-                              setBatchFiles(newFiles);
-                            }}
+                            viewMode="grid"
+                            onRemove={() => batchImageClassifier.removeFile(i)}
                           />
                         ))}
                       </div>
-                    )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-                    {batchAudioMutation.isPending && (
-                      <div className="text-center py-8 text-muted-foreground animate-pulse">
-                        Processing {batchFiles.length} audio clips...
+            {/* Batch Audio Tab */}
+            <TabsContent value="batch-audio" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Batch Audio Classification</CardTitle>
+                  <CardDescription>
+                    Upload multiple audio files to classify them at once. Max 50
+                    files, 10MB each.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {batchAudioClassifier.isError && (
+                    <Alert variant="destructive">
+                      <AlertDescription className="flex items-center justify-between">
+                        <span>Batch processing failed. Please try again.</span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={batchAudioClassifier.retry}
+                          className="gap-2"
+                        >
+                          <RefreshCw className="w-4 h-4" /> Retry
+                        </Button>
+                      </AlertDescription>
+                    </Alert>
+                  )}
+
+                  {batchAudioClassifier.result ? (
+                    <div className="space-y-4">
+                      <BatchResults
+                        data={batchAudioClassifier.result}
+                        files={batchAudioClassifier.files}
+                      />
+                      <Button
+                        onClick={batchAudioClassifier.reset}
+                        variant="outline"
+                        className="w-full"
+                      >
+                        Process More
+                      </Button>
+                    </div>
+                  ) : batchAudioClassifier.isPending ? (
+                    <div className="space-y-6">
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        {batchAudioClassifier.files.map((file, i) => (
+                          <FilePreview key={i} file={file} viewMode="list" />
+                        ))}
                       </div>
-                    )}
-
-                    {batchAudioMutation.data && (
-                      <div className="space-y-4">
-                        <BatchResults data={batchAudioMutation.data} files={batchFiles} />
-                        <Button onClick={handleReset} variant="outline" className="w-full">Process More</Button>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-        </Tabs>
+                      <BatchResultsSkeleton
+                        count={Math.min(batchAudioClassifier.files.length, 4)}
+                      />
+                    </div>
+                  ) : batchAudioClassifier.files.length === 0 ? (
+                    <FileUploader
+                      accept={{ "audio/*": [".wav", ".mp3", ".ogg"] }}
+                      maxFiles={50}
+                      onFilesSelected={batchAudioClassifier.classify}
+                      showPreview
+                    />
+                  ) : (
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      {batchAudioClassifier.files.map((file, i) => (
+                        <FilePreview
+                          key={i}
+                          file={file}
+                          viewMode="list"
+                          onRemove={() => batchAudioClassifier.removeFile(i)}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </main>
       </div>
     </div>
-  )
+  );
 }
 
-export default App
+export default App;
