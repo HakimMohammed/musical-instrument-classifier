@@ -12,8 +12,10 @@ app = FastAPI(
 origins = [
     "http://localhost:5173",  # Vite default port
     "http://localhost:3000",  # React default port
+    "http://localhost",       # Docker nginx (port 80)
     "http://127.0.0.1:5173",
     "http://127.0.0.1:3000",
+    "http://127.0.0.1",       # Docker nginx (port 80)
 ]
 
 app.add_middleware(
