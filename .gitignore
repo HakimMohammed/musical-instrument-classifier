@@ -13,6 +13,3 @@ __pycache__/
 # uv environment files
 .uv/
 .uvs/
-.python-version
-pyproject.toml
-uv.lock
