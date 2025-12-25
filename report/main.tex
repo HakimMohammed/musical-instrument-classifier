@@ -72,45 +72,74 @@
 %	TITLE PAGE
 %----------------------------------------------------------------------------------------
 \begin{titlepage}
+    \thispagestyle{empty}
     \begin{center}
-        % Header with Logo
-        \begin{figure}[h]
-            \centering
-            \includegraphics[width=0.4\textwidth]{enset-logo.png} 
-        \end{figure}
+        \vspace*{-1cm}
         
-        \vspace{1cm}
-        {\Large \textbf{Hassan II University of Casablanca}} \\
-        {\Large \textbf{ENSET Mohammedia}} \\
-        
-        \vspace{0.5cm}
-        {\large Department of Mathematics and Computer Science} \\
-        {\large Master: Distributed Systems and Artificial Intelligence}
-        
-        \vspace{2cm}
-        
-        {\Huge \textbf{Musical Instrument Classifier}} \\
-        \vspace{0.5cm}
-        {\Large Deep Learning Classification from Images and Audio}
-        
-        \vspace{2cm}
-        
-        \textbf{Authors:} \\
-        JERAIDI Yassir \\
-        HAKIM Mohamed \\
-        TOUHAMI Otmane
-        
-        \vspace{1cm}
-        
-        \textbf{Supervisor:} \\
-        Pr. Soufiane HAMIDA
+        % Header: Logo on left, University info on right
+        \begin{minipage}{0.35\textwidth}
+            \begin{flushleft}
+                \includegraphics[width=0.85\textwidth]{enset-logo.png}
+            \end{flushleft}
+        \end{minipage}%
+        \hfill
+        \begin{minipage}{0.5\textwidth}
+            \begin{center}
+                \textsc{\small \bfseries Hassan II University of Casablanca} \\[0.1cm]
+                \textsc{\small \bfseries École Normale Supérieure} \\[0.1cm]
+                \textsc{\small \bfseries de L'Enseignement Technique} \\[0.1cm]
+                \textsc{\small \bfseries de Mohammedia}
+            \end{center}
+        \end{minipage}
         
         \vspace{1.5cm}
         
-        {\large Module: Advanced Artificial Intelligence}
+        % Report Type
+        \textsc{\huge \bfseries Project Report}\\[0.6cm]
+        
+        % Department and Major
+        \textsc{\normalsize Department of Mathematics and Computer Science}\\[0.3cm]
+        \textsc{\Large \bfseries Master: Distributed Systems and}\\[0.2cm]
+        \textsc{\Large \bfseries Artificial Intelligence (SDIA)}\\[0.8cm]
+        
+        % Module
+        \textsc{\normalsize Module:}\\[0.2cm]
+        \textsc{\large \bfseries Advanced Artificial Intelligence}\\[0.8cm]
+        
+        % Subject with horizontal rules
+        \textsc{\normalsize Subject:}\\[0.3cm]
+        \rule{0.6\linewidth}{1pt}\\[0.5cm]
+        \textsc{\Huge \bfseries Musical Instrument}\\[0.3cm]
+        \textsc{\Huge \bfseries Classifier}\\[0.3cm]
+        \textsc{\Large Deep Learning Classification}\\[0.2cm]
+        \textsc{\Large from Images and Audio}\\[0.5cm]
+        \rule{0.6\linewidth}{1pt}
+        
+        \vspace{1.2cm}
+        
+        % Authors and Supervisor in two columns
+        \begin{minipage}{0.48\textwidth}
+            \begin{flushleft}
+                \large
+                \emph{\bfseries Presented by:}\\[0.3cm]
+                JERAIDI Yassir\\[0.3cm]
+                HAKIM Mohamed\\[0.3cm]
+                TOUHAMI Otmane
+            \end{flushleft}
+        \end{minipage}%
+        \hfill
+        \begin{minipage}{0.48\textwidth}
+            \begin{flushright}
+                \large
+                \emph{\bfseries Supervised by:}\\[0.3cm]
+                Pr. Soufiane HAMIDA
+                \vspace{1.5cm}
+            \end{flushright}
+        \end{minipage}
         
         \vfill
         
+        % Academic Year
         {\large Academic Year 2024-2025}
         
     \end{center}
