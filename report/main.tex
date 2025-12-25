@@ -1,0 +1,191 @@
+\documentclass[a4paper,12pt]{report}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+\usepackage{graphicx}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{listings}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{amsmath}
+
+% Geometry Settings
+\geometry{
+    a4paper,
+    left=2.5cm,
+    right=2.5cm,
+    top=2.5cm,
+    bottom=2.5cm
+}
+\linespread{1.3}
+
+% Graphics Path
+\graphicspath{{../plots/image/}{../plots/audio/}{../screenshots/}{../assets/}{../process/}}
+
+% Hyperref Settings
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    filecolor=magenta,      
+    urlcolor=blue,
+    pdftitle={Musical Instrument Classifier},
+    pdfauthor={JERAIDI Yassir, HAKIM Mohammed, TOUHAMI Otmane},
+}
+
+% Code Listing Settings
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}
+\lstset{style=mystyle}
+
+\begin{document}
+
+%----------------------------------------------------------------------------------------
+%	TITLE PAGE
+%----------------------------------------------------------------------------------------
+\begin{titlepage}
+    \begin{center}
+        % Header with Logo
+        \begin{figure}[h]
+            \centering
+            \includegraphics[width=0.4\textwidth]{enset-logo.png} 
+        \end{figure}
+        
+        \vspace{1cm}
+        {\Large \textbf{Hassan II University of Casablanca}} \\
+        {\Large \textbf{ENSET Mohammedia}} \\
+        
+        \vspace{0.5cm}
+        {\large Department of Mathematics and Computer Science} \\
+        {\large Master: Distributed Systems and Artificial Intelligence}
+        
+        \vspace{2cm}
+        
+        {\Huge \textbf{Musical Instrument Classifier}} \\
+        \vspace{0.5cm}
+        {\Large Deep Learning Classification from Images and Audio}
+        
+        \vspace{2cm}
+        
+        \textbf{Authors:} \\
+        JERAIDI Yassir \\
+        HAKIM Mohamed \\
+        TOUHAMI Otmane
+        
+        \vspace{1cm}
+        
+        \textbf{Supervisor:} \\
+        Pr. Soufiane HAMIDA
+        
+        \vspace{1.5cm}
+        
+        {\large Module: Advanced Artificial Intelligence}
+        
+        \vfill
+        
+        {\large Academic Year 2024-2025}
+        
+    \end{center}
+\end{titlepage}
+
+%----------------------------------------------------------------------------------------
+%	ABSTRACT
+%----------------------------------------------------------------------------------------
+\input{chapters/00a_abstract}
+\input{chapters/00b_resume}
+
+%----------------------------------------------------------------------------------------
+%	TABLE OF CONTENTS
+%----------------------------------------------------------------------------------------
+\tableofcontents
+\clearpage
+
+%----------------------------------------------------------------------------------------
+%	LIST OF FIGURES
+%----------------------------------------------------------------------------------------
+\listoffigures
+\clearpage
+
+%----------------------------------------------------------------------------------------
+%	LIST OF ABBREVIATIONS
+%----------------------------------------------------------------------------------------
+\chapter*{List of Abbreviations}
+\addcontentsline{toc}{chapter}{List of Abbreviations}
+
+\begin{longtable}{@{}p{3cm}p{10cm}@{}}
+\toprule
+\textbf{Abbreviation} & \textbf{Definition} \\
+\midrule
+\endhead
+
+API & Application Programming Interface \\
+CNN & Convolutional Neural Network \\
+CORS & Cross-Origin Resource Sharing \\
+CSV & Comma-Separated Values \\
+EDA & Exploratory Data Analysis \\
+FFT & Fast Fourier Transform \\
+GPU & Graphics Processing Unit \\
+HTTP & Hypertext Transfer Protocol \\
+JSON & JavaScript Object Notation \\
+MFCC & Mel-Frequency Cepstral Coefficients \\
+ML & Machine Learning \\
+MSE & Mean Squared Error \\
+REST & Representational State Transfer \\
+ResNet & Residual Neural Network \\
+ROC AUC & Receiver Operating Characteristic Area Under Curve \\
+SDK & Software Development Kit \\
+UI & User Interface \\
+WAV & Waveform Audio File Format \\
+YAMNet & Yet Another Mobile Network (Audio Classification) \\
+
+\bottomrule
+\end{longtable}
+\clearpage
+
+%----------------------------------------------------------------------------------------
+%	CHAPTERS
+%----------------------------------------------------------------------------------------
+\input{chapters/01_introduction}
+\input{chapters/02_context}
+\input{chapters/03_tools}
+\input{chapters/04_methodology}
+\input{chapters/05_implementation}
+\input{chapters/06_results}
+\input{chapters/06b_challenges}
+\input{chapters/07_conclusion}
+
+%----------------------------------------------------------------------------------------
+%	APPENDIX
+%----------------------------------------------------------------------------------------
+\appendix
+\input{chapters/08_appendix}
+
+\end{document}

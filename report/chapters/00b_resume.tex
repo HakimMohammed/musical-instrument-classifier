@@ -1,0 +1,13 @@
+\chapter*{Résumé}
+\addcontentsline{toc}{chapter}{Résumé}
+
+La reconnaissance automatique des instruments de musique représente un défi fascinant à l'intersection de la vision par ordinateur et du traitement du signal audio. Ce projet relève ce défi en développant une plateforme complète d'apprentissage profond capable de classifier les instruments de musique à partir d'images visuelles et d'enregistrements audio. Cette approche bimodale reflète la réalité que les instruments peuvent être identifiés par leur apparence physique ainsi que par les caractéristiques timbrales distinctives des sons qu'ils produisent.
+
+Pour la classification basée sur l'image, nous utilisons le transfer learning avec l'architecture ResNet50 pré-entraînée sur ImageNet. Le modèle est affiné sur un ensemble de données de trente classes d'instruments distinctes, allant des instruments courants comme la guitare et le piano à des instruments plus spécialisés comme le didgeridoo et le clavicorde. La base convolutionnelle gelée extrait des caractéristiques visuelles riches qui sont ensuite traitées par des couches denses personnalisées pour la classification spécifique aux instruments.
+
+Pour la classification audio, nous exploitons le modèle YAMNet développé par Google, qui fournit des embeddings audio sémantiquement significatifs. Ces vecteurs de caractéristiques de 1024 dimensions capturent l'essence acoustique de chaque son et servent d'entrée à un classificateur de réseau neuronal personnalisé. Le modèle audio catégorise les sons en onze familles d'instruments définies par le dataset NSynth, incluant les cuivres, les cordes, les claviers et autres.
+
+Le système complet est déployé comme une application web full-stack comprenant un backend FastAPI qui sert les deux modèles de classification via des endpoints RESTful, supportant les modes de prédiction pour fichier unique et par lot. Le frontend basé sur React fournit une interface intuitive avec upload de fichiers par glisser-déposer, visualisation en temps réel de la forme d'onde audio, et affichage immédiat des résultats de prédiction avec scores de confiance. Les deux modèles atteignent environ 96\% de précision de classification sur leurs ensembles de test respectifs.
+
+\vspace{0.5cm}
+\noindent \textbf{Mots-clés:} Classification d'Instruments de Musique, Apprentissage Profond, Transfer Learning, Réseaux de Neurones Convolutifs, Classification Audio, ResNet50, YAMNet, FastAPI, React.

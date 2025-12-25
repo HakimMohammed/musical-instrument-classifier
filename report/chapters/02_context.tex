@@ -1,0 +1,39 @@
+\chapter{Context \& State of the Art}
+
+\section{Musical Instrument Classification Fundamentals}
+
+Musical instrument classification represents a fascinating application of pattern recognition that spans multiple modalities of perception. Humans identify instruments through a combination of visual and auditory cues, recognizing the distinctive shape of a violin or the characteristic twang of a guitar string almost instantaneously. Replicating this ability in machines requires understanding both the visual characteristics that distinguish instruments and the acoustic properties that define their unique sounds.
+
+From a visual perspective, musical instruments exhibit remarkable diversity in form. String instruments feature resonating bodies with necks and fingerboards, though the exact proportions vary from the diminutive ukulele to the substantial double bass. Wind instruments typically present elongated tubular structures, from the straight lines of a clarinet to the coiled brass of a French horn. Percussion instruments encompass everything from the cylindrical drums to the flat metal surfaces of cymbals. Keyboard instruments present their distinctive rows of keys, whether on a grand piano or an electronic synthesizer.
+
+From an acoustic perspective, each instrument family produces sound through distinct physical mechanisms that leave identifiable signatures in the resulting audio. String instruments generate sound through vibrating strings, with the string material, tension, and resonating body shape all contributing to the characteristic timbre. Wind instruments produce sound through vibrating air columns, with the bore shape and material affecting the harmonic content. Percussion instruments create sound through the vibration of struck surfaces, with attack transients and decay characteristics varying by material and construction.
+
+\section{Transfer Learning in Computer Vision}
+
+The advent of deep learning transformed the field of computer vision, with convolutional neural networks achieving superhuman performance on image classification tasks. However, training these networks from scratch requires enormous datasets and computational resources. The ImageNet Large Scale Visual Recognition Challenge, which drove much of this progress, provided over one million labeled images across one thousand categories. Not every application has access to data at this scale.
+
+Transfer learning emerged as a solution to this limitation. The key insight is that the features learned by a network on a large dataset are often generalizable to new tasks. A network trained to recognize dogs and cats learns to detect edges, textures, and shapes that are useful for recognizing many other objects. By taking a pre-trained network and adapting it to a new task, practitioners can achieve strong performance even with limited training data.
+
+The ResNet architecture, introduced by Microsoft Research in 2015, represents a particularly influential contribution to this field. The key innovation was the introduction of residual connections, also known as skip connections, which allow gradients to flow directly through the network during training. This architectural modification enabled the training of much deeper networks than was previously possible, with ResNet variants reaching fifty, one hundred and one, or even one hundred and fifty two layers. The depth of these networks allows them to learn increasingly abstract and powerful feature representations.
+
+For our image classification task, we chose to use ResNet50, a fifty-layer variant that provides an excellent balance between model capacity and computational efficiency. This network, pre-trained on ImageNet, serves as a feature extractor. We freeze the pre-trained weights and add custom classification layers that learn to map these features to our specific instrument categories.
+
+\section{Audio Classification and Embeddings}
+
+Audio classification presents distinct challenges compared to image classification. While images can be processed as static two-dimensional arrays of pixels, audio signals are inherently temporal, with meaning arising from patterns that unfold over time. Early approaches to audio classification relied on hand-crafted features such as Mel-frequency cepstral coefficients, which capture spectral characteristics of short audio frames. Modern deep learning approaches have largely superseded these traditional features.
+
+One powerful approach involves converting audio signals into spectrograms, visual representations of the frequency content over time. These spectrograms can then be processed using the same convolutional neural network architectures developed for image classification. This transformation leverages the substantial investment the research community has made in developing effective image classifiers.
+
+YAMNet, developed by Google Research, takes this approach further by providing a pre-trained model specifically designed for audio classification. Trained on the AudioSet dataset, which contains over two million human-labeled ten-second sound clips, YAMNet learned to classify sounds into five hundred and twenty one categories. More importantly for our purposes, YAMNet can serve as an embedding extractor, producing one thousand and twenty four dimensional vectors that capture the semantic content of audio signals.
+
+These embeddings encode rich information about the audio content in a form that is amenable to further processing. By training a simple classifier on top of these embeddings, we can leverage the extensive training that YAMNet received without needing access to the massive AudioSet dataset ourselves. This approach represents transfer learning applied to the audio domain.
+
+\section{Modern Web Application Architecture}
+
+Deploying machine learning models requires more than just training algorithms; it requires building complete systems that can serve predictions to users. The modern approach to building such systems typically involves a separation between backend services that handle computation and frontend applications that provide the user interface.
+
+On the backend, RESTful APIs have become the standard for exposing machine learning model predictions. REST, which stands for Representational State Transfer, provides a uniform interface for client-server communication using standard HTTP methods. FastAPI, a modern Python web framework, has gained popularity in the machine learning community for its combination of high performance, automatic documentation generation, and native support for Python type hints.
+
+On the frontend, single-page applications built with JavaScript frameworks provide responsive user experiences. React, developed by Facebook, has become one of the most popular choices for building these interfaces. The component-based architecture of React allows developers to create reusable interface elements that manage their own state and lifecycle. Combined with modern build tools like Vite and styling solutions like TailwindCSS, React enables rapid development of polished user interfaces.
+
+Containerization with Docker has become the standard approach for packaging and deploying these applications. By bundling an application with all its dependencies into a container image, developers ensure that the application runs consistently across different environments. Docker Compose extends this model to multi-container applications, allowing the backend API and frontend application to be deployed and scaled together.

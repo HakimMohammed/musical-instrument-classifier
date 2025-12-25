@@ -1,0 +1,13 @@
+\chapter*{Abstract}
+\addcontentsline{toc}{chapter}{Abstract}
+
+The automatic recognition of musical instruments represents a fascinating challenge at the intersection of computer vision and audio signal processing. This project addresses this challenge by developing a comprehensive deep learning platform capable of classifying musical instruments from both visual images and audio recordings. The dual-modality approach reflects the reality that instruments can be identified through their physical appearance as well as through the distinctive timbral characteristics of the sounds they produce.
+
+For image-based classification, we employ transfer learning with the ResNet50 architecture pre-trained on ImageNet. The model is fine-tuned on a curated dataset of thirty distinct instrument classes, ranging from common instruments such as guitar and piano to more specialized ones like the didgeridoo and clavichord. The frozen convolutional base extracts rich visual features that are then processed by custom dense layers for instrument-specific classification.
+
+For audio-based classification, we leverage the YAMNet model developed by Google, which provides semantically meaningful audio embeddings. These 1024-dimensional feature vectors capture the acoustic essence of each sound and serve as input to a custom neural network classifier. The audio model categorizes sounds into eleven instrument families defined by the NSynth dataset, including brass, strings, keyboards, and others.
+
+The complete system is deployed as a full-stack web application featuring a FastAPI backend that serves both classification models through RESTful endpoints, supporting single-file and batch prediction modes. The React-based frontend provides an intuitive interface with drag-and-drop file upload, real-time audio waveform visualization, and immediate display of prediction results with confidence scores. Both models achieve approximately 96\% classification accuracy on their respective test sets, demonstrating the effectiveness of transfer learning for musical instrument recognition.
+
+\vspace{0.5cm}
+\noindent \textbf{Keywords:} Musical Instrument Classification, Deep Learning, Transfer Learning, Convolutional Neural Networks, Audio Classification, ResNet50, YAMNet, FastAPI, React.

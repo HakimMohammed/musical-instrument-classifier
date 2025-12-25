@@ -1,0 +1,134 @@
+\chapter{Challenges \& Problem Solving}
+
+This chapter documents the significant challenges we encountered during the development of the audio classification system, the solutions we attempted, and the lessons we learned. While the image classification model performed well from the beginning, the audio classification journey was marked by unexpected obstacles that required extensive investigation and experimentation.
+
+\section{The Domain Mismatch Problem}
+
+\subsection{Discovery of the Problem}
+
+After achieving excellent results on the NSynth test set, with accuracy exceeding 96\%, we were confident that our audio classification model was ready for deployment. However, when a colleague tested the system with ``real world'' audio files from external sources such as freesound.org and findsounds.com, the results were catastrophic. The model achieved only approximately 50\% accuracy, essentially performing no better than random guessing.
+
+This dramatic drop in performance was puzzling. How could a model that performed so well on test data fail so completely on real-world inputs?
+
+\subsection{Identifying the Root Cause}
+
+After extensive investigation and consultation with colleagues, we identified the problem as \textbf{Domain Mismatch}, also known as distribution shift. The model had learned to classify NSynth samples perfectly, but NSynth samples are fundamentally different from real-world audio recordings.
+
+NSynth samples have distinctive characteristics that set them apart from real recordings. They are studio-quality with professional production values. The notes are perfectly isolated with no overlapping sounds. All samples share consistent sampling rates and encoding. There is minimal background noise or room acoustics. Loudness levels are uniform across samples. The timbres, while varied, share a certain ``synthetic'' quality even when derived from real instruments.
+
+The model implicitly learned: ``This is what NSynth instruments sound like,'' rather than: ``This is what real instruments sound like.''
+
+This phenomenon is formally known as \textbf{in-distribution generalization with out-of-distribution failure}. The model generalizes well within the training distribution but fails when presented with data from a different distribution, even if the semantic content (instrument type) is the same.
+
+Real-world audio differs from NSynth in numerous ways. Recording devices vary in quality, from professional microphones to smartphone recordings. Background noise from ambient sounds, room tone, and electrical interference is common. Reverb and room acoustics color the sound. Playing styles introduce human variations in timing, dynamics, and articulation. Pitch may drift slightly out of tune. Multiple sound sources may be present simultaneously.
+
+\section{Attempted Solutions}
+
+Recognizing the domain mismatch problem, we explored several potential solutions.
+
+\subsection{Solution 1: Dataset Mixing}
+
+Our first approach was to create a more diverse training dataset by combining multiple sources. Instead of training exclusively on NSynth, we assembled data from multiple datasets including NSynth, OpenMIC, IRMAS, and custom datasets found on GitHub.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{Pasted image 20251224235458.png}
+    \caption{Class Mapping for Mixed Dataset}
+    \label{fig:class_mapping}
+\end{figure}
+
+This approach introduced its own complications. The amplitude envelope method we had developed for removing dead space from NSynth samples was not applicable to all datasets. Some datasets had different file formats, sampling rates, or labeling conventions. Harmonizing these differences required significant preprocessing effort.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{Pasted image 20251224235803.png}
+    \caption{Training Results with Mixed Dataset}
+    \label{fig:mixed_dataset_results}
+\end{figure}
+
+The results were illuminating. Accuracy dropped from the 90s to the 80s. Rather than being a setback, this represented progress toward understanding the model's true capabilities. The inflated accuracy on pure NSynth was not indicative of real-world performance. The mixed dataset accuracy better reflected what the model could actually achieve.
+
+However, when we tested this model on external real-world data, the problem persisted. The accuracy was still around 50\%. Dataset mixing alone was insufficient to bridge the domain gap.
+
+\subsection{Solution 2: Aggressive Data Augmentation}
+
+Our next approach was to ``ruin'' the training data through aggressive augmentation, simulating the degradation and variation present in real-world recordings. We applied multiple augmentation techniques to each audio sample.
+
+Time Stretching makes audio faster or slower without changing pitch, simulating variations in tempo. Pitch Shifting moves the pitch up or down, simulating instruments that are slightly out of tune. Additive Noise injects background noise at various levels, simulating noisy recording environments. Random Gain varies the loudness randomly, simulating different recording levels and microphone placements.
+
+For each original file, we created two augmented variants, tripling the effective dataset size.
+
+This approach had significant computational costs. The augmentation operations are CPU-intensive, and despite having capable hardware (RTX 4060 GPU with 8GB VRAM, 32GB RAM), the heavy I/O operations and CPU-bound augmentation became bottlenecks. Training time increased dramatically to approximately 8 hours.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{Pasted image 20251225000530.png}
+    \caption{Training Results with Aggressive Augmentation}
+    \label{fig:augmented_training}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{Pasted image 20251225000535.png}
+    \caption{Confusion Matrix After Augmentation}
+    \label{fig:augmented_confusion}
+\end{figure}
+
+The results were striking. Accuracy dropped to approximately 50\%, the same accuracy we had observed on real-world test data. This was actually a validation of our hypothesis. The augmented data exposed the model's true capability. We had finally achieved a training environment that matched the difficulty of real-world deployment.
+
+However, this did not solve the problem. It merely confirmed that our model, as architected, could not achieve better than 50\% accuracy on realistic audio.
+
+\section{Fine-Tuning Limitations}
+
+\subsection{YAMNet Deployment Constraints}
+
+The logical next step would be to fine-tune the YAMNet backbone on our specific task, allowing it to learn domain-specific features rather than relying solely on generic audio representations. However, we encountered a critical limitation in the deployment format of YAMNet on TensorFlow Hub.
+
+The YAMNet artifact available through TensorFlow Hub is shipped as a \textbf{static graph optimized for inference}. This format encapsulates non-differentiable preprocessing steps within the model graph itself, which prevents standard end-to-end training. The preprocessing operations, including audio resampling and spectrogram computation, are baked into the graph in a way that does not support gradient propagation.
+
+Enabling fine-tuning would strictly require abandoning the TensorFlow Hub artifact entirely and re-implementing the underlying MobileNetV1 backbone manually in code, a process commonly known as ``model surgery.'' This would involve extracting the trained weights, reconstructing the architecture layer by layer in standard Keras, and reimplementing the preprocessing pipeline as differentiable operations.
+
+Since our codebase was already established using standard TensorFlow workflows with the Hub-based YAMNet integration, the cost of rewriting the entire feature extraction pipeline to accommodate this custom implementation was deemed too high. The engineering effort required would have exceeded the scope of our project timeline.
+
+\subsection{Alternative Approaches Considered}
+
+Recognizing YAMNet's limitations, we considered two alternative paths.
+
+The first alternative was to switch to PANNs (Pretrained Audio Neural Networks) while keeping the embedding-based architecture. PANNs are designed to be fine-tunable and might allow us to adapt the backbone to our specific domain.
+
+The second alternative was to treat audio as images by converting waveforms to spectrograms and using image classification architectures like EfficientNetB0. This approach would let us leverage the extensive research on image classification and fine-tuning techniques.
+
+We chose the second approach, reasoning that treating audio as spectrograms would give us more flexibility and access to proven fine-tuning techniques.
+
+\subsection{Implementation Challenges}
+
+Converting to the spectrogram-based approach required significant pipeline changes. Instead of feeding raw audio to YAMNet, we needed to compute mel spectrograms and save them in a format suitable for efficient training. We chose TFRecords to minimize I/O overhead and CPU usage during training.
+
+Despite these optimizations, training remained extremely slow. A single training run exceeded 15 hours, making experimentation impractical. Each hypothesis we wanted to test required a full day of training time.
+
+\section{Hardware Constraints and Project Scope}
+
+At this point, we reached the limits of what was feasible within our project constraints. While consumer-grade hardware (GPU RTX 4060, 8GB VRAM, 32GB RAM) was sufficient for the initial experiments, the scale of experimentation required to solve the domain mismatch problem exceeded what we could reasonably accomplish.
+
+Each experimental iteration involved preprocessing large datasets, training for many hours, and evaluating on multiple test sets. The cumulative time and computational cost became prohibitive.
+
+\section{Lessons Learned}
+
+This challenging journey yielded valuable insights that we believe are worth documenting.
+
+The first lesson is that \textbf{test set performance can be misleading}. Achieving 96\% accuracy on NSynth gave us false confidence. The test set, drawn from the same distribution as training, did not reveal the model's limitations on out-of-distribution data.
+
+The second lesson is that \textbf{domain matters more than architecture}. We initially focused on optimizing the classifier architecture, but the fundamental problem was the gap between our training data and real-world audio. No amount of classifier tuning could bridge this gap.
+
+The third lesson is that \textbf{data augmentation reveals true performance}. By augmenting training data to match real-world conditions, we exposed the model's actual capabilities. This is a valuable diagnostic technique even if it does not solve the underlying problem.
+
+The fourth lesson is that \textbf{not all pretrained models are equally flexible}. YAMNet's design as a frozen feature extractor limited our options for improvement. When selecting pretrained models for transfer learning, understanding their fine-tuning capabilities is crucial.
+
+\section{Current State and Future Directions}
+
+For the purposes of this project, we deployed the audio model trained on NSynth, acknowledging its limitations. The model performs well on clean, isolated instrument sounds similar to those in NSynth, making it suitable for demonstration purposes and controlled environments.
+
+For production deployment with real-world audio, significant additional work would be required. This would likely involve training on a massive and diverse audio dataset, potentially fine-tuning PANNs or similar architectures designed for adaptation, implementing robust audio preprocessing to normalize recording conditions, and investing in substantial computational resources for experimentation.
+
+The challenges we encountered are not unique to our project. Audio classification in the wild remains an active research area, and the gap between benchmark performance and real-world performance is widely recognized in the research community.
+

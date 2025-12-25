@@ -1,0 +1,215 @@
+\chapter{Appendix}
+
+\section{Project Directory Structure}
+
+The following listing presents the organization of the project repository. Each directory serves a specific purpose in the overall architecture, from data science notebooks to the deployed web application.
+
+\begin{lstlisting}
+musical-instrument-classifier/
+|-- config/                  # Configuration
+|   `-- constants.py         # Global constants
+|-- data/                    # Datasets
+|   `-- images/              # Image dataset files
+|       |-- processed/       # Cleaned metadata
+|       `-- raw/             # Original images and CSVs
+|           |-- train/       # Training images by class
+|           |-- valid/       # Validation images by class
+|           `-- test/        # Test images by class
+|-- frontend/                # React Application
+|   |-- src/                 # Source code
+|   |   |-- components/      # React components
+|   |   |   |-- ui/          # shadcn/ui components
+|   |   |   |-- file-uploader.tsx
+|   |   |   |-- prediction-result.tsx
+|   |   |   `-- audio-preview.tsx
+|   |   |-- hooks/           # Custom React hooks
+|   |   |   `-- useClassifier.ts
+|   |   |-- lib/             # Utilities
+|   |   |   |-- api.ts       # API client
+|   |   |   `-- utils.ts     # Helper functions
+|   |   |-- App.tsx          # Main application
+|   |   `-- main.tsx         # Entry point
+|   |-- Dockerfile           # Frontend container
+|   |-- nginx.conf           # Production server config
+|   `-- package.json         # Dependencies
+|-- models/                  # Trained Models
+|   |-- audio/               # Audio classifier
+|   |   `-- instrument_classifier.h5
+|   `-- image/               # Image classifier
+|       `-- resnet50_instrument_classifier.keras
+|-- plots/                   # Visualization Outputs
+|   |-- audio/               # Audio model plots
+|   `-- image/               # Image model plots
+|-- report/                  # LaTeX Documentation
+|   |-- main.tex             # Main document
+|   `-- chapters/            # Chapter files
+|-- src/                     # Source Code
+|   |-- api/                 # FastAPI Backend
+|   |   |-- main.py          # Application entry
+|   |   |-- config.py        # Settings
+|   |   |-- dependencies.py  # Dependency injection
+|   |   |-- routers/         # API endpoints
+|   |   |   |-- image.py     # Image classification
+|   |   |   |-- audio.py     # Audio classification
+|   |   |   `-- batch.py     # Batch processing
+|   |   |-- schemas/         # Pydantic models
+|   |   |   `-- prediction.py
+|   |   `-- services/        # Business logic
+|   |       |-- image_service.py
+|   |       `-- audio_service.py
+|   |-- audio/               # Audio ML Pipeline
+|   |   |-- 01_Data_Preparation.ipynb
+|   |   |-- 02_Model_Training.ipynb
+|   |   `-- 03_Test_Model.ipynb
+|   `-- image/               # Image ML Pipeline
+|       |-- 01_Data_Preparation.ipynb
+|       |-- 02_Model_Training.ipynb
+|       `-- 03_Test_Model.ipynb
+|-- utils/                   # Utility Scripts
+|   |-- embedding_extraction.py
+|   |-- image_processing.py
+|   |-- model_builder.py
+|   |-- normalize.py
+|   |-- plot.py
+|   `-- train_utils.py
+|-- Dockerfile               # Backend container
+|-- docker-compose.yml       # Service orchestration
+|-- requirements.txt         # Python dependencies
+`-- pyproject.toml           # Project metadata
+\end{lstlisting}
+
+\section{Technology Stack Summary}
+
+The following table summarizes the core technologies employed in the project, organized by functional category.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Category} & \textbf{Technology} & \textbf{Purpose} \\ \hline
+Language & Python 3.11+ & Backend and ML \\ \hline
+Frontend & React 19 / Vite & User Interface \\ \hline
+Backend & FastAPI 0.124+ & REST API \\ \hline
+ML Framework & TensorFlow 2.20 / Keras & Deep Learning \\ \hline
+Image Model & ResNet50 & Transfer Learning Base \\ \hline
+Audio Model & YAMNet (TF Hub) & Audio Embeddings \\ \hline
+Data Processing & Pandas / NumPy & Data Manipulation \\ \hline
+Visualization & Matplotlib / Seaborn & Plots and Graphs \\ \hline
+Audio Processing & Librosa & Audio Loading \\ \hline
+Frontend Styling & TailwindCSS v4 & CSS Framework \\ \hline
+Audio Viz & WaveSurfer.js 7.12+ & Waveform Display \\ \hline
+State Management & TanStack React Query & Server State \\ \hline
+Container & Docker & Isolation and Packaging \\ \hline
+Orchestration & Docker Compose & Multi-Container Management \\ \hline
+\end{tabular}
+\caption{Complete Technology Stack}
+\end{table}
+
+\section{Dataset Information}
+
+This section provides details about the datasets used for training the classification models.
+
+\subsection{Image Dataset}
+
+The Musical Instruments Image Dataset from Kaggle contains photographs of instruments organized into thirty classes. The following table lists all classes with their distribution across splits.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|l|}
+\hline
+\textbf{Instrument} & \textbf{Family} \\ \hline
+Accordion & Keyboard \\ \hline
+Alphorn & Brass \\ \hline
+Bagpipes & Wind \\ \hline
+Banjo & String \\ \hline
+Bongo Drum & Percussion \\ \hline
+Casaba & Percussion \\ \hline
+Castanets & Percussion \\ \hline
+Clarinet & Woodwind \\ \hline
+Clavichord & Keyboard \\ \hline
+Concertina & Keyboard \\ \hline
+Didgeridoo & Wind \\ \hline
+Drum & Percussion \\ \hline
+Dulcimer & String \\ \hline
+Flute & Woodwind \\ \hline
+French Horn & Brass \\ \hline
+Gong & Percussion \\ \hline
+Guitar & String \\ \hline
+Harmonica & Wind \\ \hline
+Harp & String \\ \hline
+Maraca & Percussion \\ \hline
+Marimba & Percussion \\ \hline
+Ocarina & Wind \\ \hline
+Organ & Keyboard \\ \hline
+Piano & Keyboard \\ \hline
+Saxophone & Woodwind \\ \hline
+Sitar & String \\ \hline
+Steel Drum & Percussion \\ \hline
+Trombone & Brass \\ \hline
+Trumpet & Brass \\ \hline
+Violin & String \\ \hline
+\end{tabular}
+\caption{Image Dataset Instrument Classes}
+\end{table}
+
+\subsection{Audio Dataset}
+
+The NSynth Dataset from Google Magenta contains synthesized instrument notes organized into eleven families. Each family represents a category of instruments sharing similar acoustic properties.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|l|}
+\hline
+\textbf{Family} & \textbf{Description} \\ \hline
+bass & Bass instruments including bass guitar and synth bass \\ \hline
+brass & Brass instruments like trumpet and trombone \\ \hline
+flute & Flute-like instruments \\ \hline
+guitar & Acoustic and electric guitars \\ \hline
+keyboard & Pianos, electric pianos, and harpsichords \\ \hline
+mallet & Struck instruments like marimba and vibraphone \\ \hline
+organ & Pipe organs and electronic organs \\ \hline
+reed & Instruments with vibrating reeds like clarinet \\ \hline
+string & Bowed string instruments like violin \\ \hline
+synth\_lead & Synthesizer lead sounds \\ \hline
+vocal & Vocal-like instrument sounds \\ \hline
+\end{tabular}
+\caption{Audio Dataset Instrument Families}
+\end{table}
+
+\section{API Endpoints Reference}
+
+The following table documents the REST API endpoints exposed by the FastAPI backend.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Method} & \textbf{Endpoint} & \textbf{Description} \\ \hline
+POST & /predict/image & Classify a single image \\ \hline
+POST & /predict/audio & Classify a single audio file \\ \hline
+POST & /predict/batch/images & Classify multiple images \\ \hline
+POST & /predict/batch/audio & Classify multiple audio files \\ \hline
+GET & /health & Health check endpoint \\ \hline
+GET & /docs & Swagger UI documentation \\ \hline
+GET & /redoc & ReDoc documentation \\ \hline
+\end{tabular}
+\caption{API Endpoints}
+\end{table}
+
+\section{Model Architecture Details}
+
+This section provides technical details about the neural network architectures used in the project.
+
+\subsection{Image Classification Model}
+
+The image model uses ResNet50 as the base with custom classification layers added on top. The architecture can be summarized as follows: the input layer accepts 224 by 224 by 3 images, followed by the frozen ResNet50 base that outputs 2048-dimensional feature maps. Global average pooling reduces spatial dimensions, producing a 2048-dimensional vector. A dense layer with 512 units and ReLU activation provides capacity for task-specific learning. Batch normalization stabilizes the activations, and dropout with rate 0.5 provides regularization. The final dense layer with 30 units and softmax activation produces class probabilities.
+
+\subsection{Audio Classification Model}
+
+The audio model uses a two-stage approach. First, YAMNet processes 16 kHz audio and produces 1024-dimensional embeddings for each approximately one-second window. These embeddings are averaged across time to produce a single 1024-dimensional vector per audio file. The classifier network takes these embeddings as input and passes them through dense layers with batch normalization and dropout, ultimately producing probabilities for the eleven instrument families through a softmax output layer.
+
+\section{Dependencies}
+
+The Python dependencies for the project are specified in requirements.txt. The key packages and their minimum versions include TensorFlow 2.20 for deep learning, FastAPI 0.124 for the web framework, Pydantic 2.11 for data validation, Uvicorn 0.34 for the ASGI server, Pandas 2.2 for data manipulation, NumPy 2.2 for numerical computing, Matplotlib 3.10 for visualization, Seaborn 0.13 for statistical plots, Librosa 0.11 for audio processing, Pillow 11.2 for image handling, and TensorFlow Hub 0.16 for pre-trained models.
+
+The frontend dependencies specified in package.json include React 19 for the user interface framework, Vite 6.3 for the build tool, TailwindCSS 4 for styling, TanStack React Query 5.77 for server state management, WaveSurfer.js 7.12 for audio visualization, Axios 1.9 for HTTP requests, and TypeScript 5.8 for type safety.

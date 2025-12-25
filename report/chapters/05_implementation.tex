@@ -1,0 +1,117 @@
+\chapter{Implementation \& Architecture}
+
+This chapter provides a detailed examination of the Musical Instrument Classification platform's technical realization. The discussion traverses from high-level system design through specific implementations of the data preparation pipelines, model training notebooks, backend API, and frontend application.
+
+\section{System Architecture}
+
+The platform follows a modern microservices-oriented architecture that cleanly separates the machine learning components from the serving infrastructure. The system comprises three main layers: the data science layer where models are trained in Jupyter notebooks, the backend layer where FastAPI serves predictions, and the frontend layer where users interact with a React-based web application. Docker containerization ensures consistent deployment across environments.
+
+The data science workflow operates primarily through Jupyter notebooks organized by modality. The image classification pipeline and audio classification pipeline each have dedicated notebooks for data preparation, model training, and testing. These notebooks produce trained model artifacts that are saved to the models directory, where they become available for loading by the API.
+
+User interaction is handled by a modern React single-page application that provides an intuitive interface for uploading images and audio files. The frontend communicates with the FastAPI backend over HTTP, sending files as multipart form data and receiving structured JSON responses containing classification results. The interface supports both single-file classification and batch processing modes.
+
+The backend receives uploaded files, performs the necessary preprocessing, runs inference using the loaded models, and returns predictions with associated confidence scores. The architecture maintains strict separation between the image and audio classification pipelines, with each modality having its own router, service layer, and preprocessing logic.
+
+\section{Data Preparation Implementation}
+
+\subsection{Image Data Pipeline}
+
+The image data preparation notebook begins by loading the metadata CSV file that indexes all images in the dataset. This file contains paths to image files along with their assigned class labels and the split to which each image belongs. The notebook performs exploratory analysis to understand the distribution of classes and identify any data quality issues.
+
+The pipeline reads images from their original locations, resizes them to the standard 224 by 224 pixel dimensions expected by ResNet50, and converts them to arrays suitable for training. Class labels are extracted and encoded as integers corresponding to positions in the sorted list of unique classes. This encoding enables the use of sparse categorical cross-entropy loss during training.
+
+A key step in the preparation involves computing class weights to address imbalance in the training set. Classes with fewer examples receive higher weights, ensuring that the loss function penalizes misclassification of rare classes proportionally. These weights are stored and passed to the model fitting function during training.
+
+The notebook generates a processed metadata file that standardizes paths and class encodings, simplifying the loading logic in subsequent training notebooks. This separation between data preparation and model training reflects best practices for maintainable machine learning pipelines.
+
+\subsection{Audio Data Pipeline}
+
+The audio data preparation notebook handles the more complex task of preparing audio samples for embedding extraction. The NSynth dataset contains audio files organized in a specific directory structure, with metadata provided in JSON format describing each sample's properties including the instrument family.
+
+The preparation pipeline parses the metadata to extract file paths and instrument family labels. Audio files are loaded using TensorFlow's audio reading functions, resampled to 16,000 Hz as required by YAMNet, and optionally padded or truncated to ensure consistent lengths. The embedding extraction process runs each audio sample through YAMNet, producing 1024-dimensional vectors that capture the acoustic characteristics.
+
+Rather than storing the embeddings as separate files, the pipeline processes the dataset in batches, computing embeddings and immediately feeding them to the training loop. This approach reduces storage requirements while maintaining efficiency through batch processing. For inference, embeddings are computed on-demand for uploaded audio files.
+
+\section{Model Training Implementation}
+
+\subsection{Image Model Training}
+
+The image model training notebook implements the transfer learning approach described in the methodology chapter. The notebook begins by loading the preprocessed data and computing augmentation pipelines using Keras preprocessing layers. These augmentation layers are incorporated into the model as the first layers, ensuring that augmentation is applied automatically during training.
+
+The ResNet50 base model is loaded with ImageNet weights and configured with its top classification layers removed. The include\_top parameter is set to False, and the input\_shape is specified as 224 by 224 by 3 to match our preprocessed images. All layers in the base model are frozen by setting trainable to False, preventing the pre-trained weights from being modified.
+
+The custom classification head is constructed using the Keras Functional API. The output of the ResNet50 base passes through global average pooling, then a dense layer with 512 units and ReLU activation, batch normalization, dropout with rate 0.5, and finally a dense output layer with softmax activation producing probabilities for each of the thirty classes.
+
+Training proceeds with callbacks for early stopping and model checkpointing. The early stopping callback monitors validation accuracy with a patience of five epochs, terminating training if no improvement is observed. The checkpoint callback saves the best model weights based on validation accuracy, ensuring that training can recover from overfitting by restoring optimal weights.
+
+The trained model is saved in the Keras format to the models/image directory, producing the resnet50\_instrument\_classifier.keras file that the API loads for serving predictions.
+
+\subsection{Audio Model Training}
+
+The audio model training notebook implements the YAMNet embedding approach. The notebook defines a custom classifier architecture that accepts 1024-dimensional embedding vectors as input. This architecture uses several dense layers with batch normalization and dropout, gradually reducing dimensionality before the final softmax output layer.
+
+The embedding extraction happens during data loading. For each batch of training samples, the pipeline loads audio files, passes them through YAMNet to obtain embeddings, averages across the temporal dimension, and yields the resulting vectors with their corresponding labels. This generator-based approach enables efficient processing of the large NSynth dataset without loading all embeddings into memory simultaneously.
+
+Training uses the Adam optimizer with categorical cross-entropy loss. Callbacks mirror those used in image training, with early stopping and model checkpointing ensuring robust training. The best model is saved to models/audio/instrument\_classifier.h5 for serving.
+
+\section{Backend Implementation}
+
+The FastAPI backend provides the REST API that exposes classification functionality to clients. The application structure follows clean architecture principles with routers, services, and schemas organized in separate modules.
+
+\subsection{API Structure}
+
+The main application module configures FastAPI with CORS middleware to enable cross-origin requests from the frontend. Model loading happens at startup through dependency injection, with the image and audio models loaded once and cached for the lifetime of the application. This approach avoids the overhead of loading models on each request while ensuring thread-safe access.
+
+Three routers handle different classification scenarios. The image router exposes the /predict/image endpoint for single image classification. The audio router exposes the /predict/audio endpoint for single audio classification. The batch router provides /predict/batch/images and /predict/batch/audio endpoints for processing multiple files in a single request.
+
+\subsection{Service Layer}
+
+The service layer encapsulates the logic for preprocessing inputs and running inference. The image service loads uploaded files, applies the same preprocessing used during training including resizing and normalization, and passes the resulting tensors to the model. The prediction is decoded using the class name mapping to return human-readable labels along with confidence scores.
+
+The audio service handles the more complex preprocessing required for audio files. Uploaded audio is saved temporarily, loaded at the correct sample rate, passed through YAMNet for embedding extraction, and then fed to the audio classifier. The service cleans up temporary files after processing to avoid accumulating storage.
+
+\subsection{Response Schemas}
+
+Pydantic models define the structure of API responses, ensuring consistency and enabling automatic documentation generation. The PredictionResponse schema includes the predicted class name, confidence score as a probability, the inference time in seconds, and the original filename. Batch responses wrap multiple individual predictions in a single response object.
+
+\section{Frontend Implementation}
+
+The React frontend provides an intuitive interface for interacting with the classification API. Built with modern tooling including Vite for development and TailwindCSS for styling, the application delivers a responsive experience across device sizes.
+
+\subsection{File Upload Interface}
+
+The file uploader component provides a drag-and-drop zone where users can drop images or audio files for classification. The component validates file types, accepting common image formats for the image classifier and audio formats for the audio classifier. Multiple files can be uploaded simultaneously for batch processing.
+
+Visual feedback indicates upload progress and processing status. While classification is in progress, a loading skeleton maintains layout stability. Error boundaries catch and display any failures gracefully, providing users with actionable information about what went wrong.
+
+\subsection{Prediction Results Display}
+
+Classification results are displayed in a card-based layout that presents the predicted class, confidence score, and processing time. For audio files, the interface integrates WaveSurfer.js to display the waveform and provide playback controls. Users can listen to the audio they uploaded while viewing the classification result.
+
+The confidence score is displayed both as a percentage and as a visual progress bar, providing immediate intuitive understanding of the model's certainty. Results from batch processing are displayed in a scrollable list, with each result linked to its source file.
+
+\subsection{State Management}
+
+The application uses TanStack React Query for managing server state. The useClassifier hook encapsulates the logic for submitting files to the API and handling responses. React Query provides automatic caching, background refetching, and loading state management, simplifying the component logic.
+
+Theme toggling between light and dark modes is implemented using a context provider that persists the user's preference to local storage. The theme toggle component in the header allows users to switch modes, with all components responding appropriately through Tailwind's dark mode classes.
+
+\section{Containerization}
+
+\subsection{Backend Dockerfile}
+
+The backend Dockerfile uses a multi-stage build to minimize the final image size. The first stage installs Python dependencies in a virtual environment, while the second stage copies only the necessary artifacts into a slim runtime image. The final image includes the trained model files, ensuring that the container is self-contained and can be deployed without external dependencies.
+
+The Dockerfile configures Uvicorn to serve the FastAPI application, exposing port 8000 for incoming requests. Environment variables control settings such as the number of workers and the log level, allowing configuration without image rebuilds.
+
+\subsection{Frontend Dockerfile}
+
+The frontend build follows a similar multi-stage pattern. A Node.js build stage installs dependencies and compiles the React application into optimized static files. The final stage uses Nginx to serve these files, providing efficient static file hosting with proper caching headers.
+
+The Nginx configuration includes a fallback to index.html for client-side routing, ensuring that direct navigation to application routes works correctly. API requests are proxied through Nginx to the backend service, simplifying CORS configuration.
+
+\subsection{Docker Compose}
+
+The Docker Compose file defines both services and their networking. The backend and frontend containers connect through a bridge network, with the frontend accessing the backend through the service name. Port mappings expose the frontend on port 80 and optionally the backend on port 8000 for direct API access.
+
+Volume mounts enable development mode where code changes are reflected without rebuilding containers. For production deployments, the compose file specifies resource limits and restart policies to ensure reliable operation.

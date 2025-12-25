@@ -1,0 +1,235 @@
+\chapter{Approach \& Methodology}
+
+This chapter details the methodology applied to build the musical instrument classification system. We present the complete pipeline for both image and audio classification, from data preparation through model architecture design to training and evaluation. The approach leverages transfer learning to achieve strong performance while minimizing the computational resources required.
+
+\section{Initial Problem Definition}
+
+The core challenge of this project is to build a system capable of classifying musical instruments from two distinct input modalities: images and audio recordings. Each modality presents unique challenges and requires specialized processing pipelines.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{Pasted image 20251224231534.png}
+    \caption{Problem Definition: Classification from Images and Audio}
+    \label{fig:problem_definition}
+\end{figure}
+
+\section{Proposed Solution Architecture}
+
+Our initial proposed solution aimed to create a unified classification system that could handle both modalities through a shared architecture where possible.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{Pasted image 20251224231608.png}
+    \caption{Initial Proposed Solution Architecture}
+    \label{fig:proposed_solution}
+\end{figure}
+
+After initial testing, we discovered that while the image classification performed well, the audio classification exhibited significant issues. This led us to separate the two pipelines for better debugging and optimization.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{Pasted image 20251224232306.png}
+    \caption{Separated Architecture for Image and Audio Classification}
+    \label{fig:separated_architecture}
+\end{figure}
+
+\section{Image Classification Pipeline}
+
+\subsection{Data Preparation and CSV Generation}
+
+The image classification task uses the Musical Instruments Image Dataset from Kaggle, originally contributed by the ImageNet project. The dataset contains photographs spanning thirty distinct instrument categories. The raw data is organized in separate train, test, and validation directories, each containing subdirectories for each instrument class.
+
+Our first step was to consolidate this data structure into a unified format. We developed a script that traverses all directories, extracts the image paths and their corresponding labels from the directory names, and generates a master CSV file. This CSV contains two columns: the relative path to each image file and its class label. This centralized metadata file simplifies data loading during training and ensures consistency across all processing stages.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{distribution-of-instrument-image.png}
+    \caption{Class Distribution in the Image Dataset}
+    \label{fig:image_class_distribution}
+\end{figure}
+
+\subsection{Class Imbalance and Weight Calculation}
+
+Analysis of the class distribution revealed significant imbalance, with some instrument classes having substantially more images than others. This imbalance poses a risk during training: the model might learn to favor frequently occurring classes while neglecting rare ones, resulting in poor performance on underrepresented instruments.
+
+To address this imbalance, we computed class weights inversely proportional to class frequencies. The weight for class $c$ is calculated as:
+
+$$w_c = \frac{N}{k \times n_c}$$
+
+where $N$ is the total number of samples, $k$ is the number of classes, and $n_c$ is the number of samples in class $c$. Classes with fewer samples receive higher weights, causing their misclassification to contribute more to the loss function. This mechanism ensures the model learns to recognize all instruments equally well, regardless of their frequency in the training set.
+
+\subsection{Sample Visualization}
+
+Before training, we visualized random samples from the dataset to verify data quality and understand the visual characteristics of each instrument class.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{image-samples.png}
+    \caption{Sample Images from the Musical Instruments Dataset}
+    \label{fig:image_samples}
+\end{figure}
+
+The visualization confirmed that images vary significantly in background, lighting, orientation, and image quality. Some images show instruments in isolation against neutral backgrounds, while others depict instruments in natural settings or being played. This diversity makes the classification task challenging but also ensures the model learns robust features rather than relying on spurious correlations.
+
+\subsection{Image Preprocessing}
+
+ResNet50 expects input images in a specific format. All images must be resized to 224 by 224 pixels with three color channels. Additionally, the pixel values must be normalized using the specific preprocessing function designed for ResNet50, which centers each color channel around the mean values observed in the ImageNet dataset.
+
+Our preprocessing pipeline performs the following steps for each image: first, the image is loaded and decoded into a tensor. Second, it is resized to 224 by 224 pixels using bilinear interpolation to preserve image quality. Third, the ResNet50 preprocessing function is applied, which converts pixel values from the 0-255 range to the normalized range expected by the network. This preprocessing is applied identically during training and inference to ensure consistency.
+
+\subsection{Why ResNet50}
+
+We selected ResNet50 as our backbone for several compelling reasons. First, ResNet50 introduced the revolutionary concept of residual connections, also known as skip connections, which allow gradients to flow directly through the network during backpropagation. This architectural innovation solved the vanishing gradient problem that plagued earlier deep networks, enabling training of networks with unprecedented depth.
+
+Second, ResNet50 achieves an excellent balance between model capacity and computational efficiency. With approximately 25 million parameters, it is powerful enough to learn complex visual features while remaining tractable for training on consumer hardware. Deeper variants like ResNet101 or ResNet152 offer marginal accuracy improvements at significantly higher computational cost.
+
+Third, ResNet50 pre-trained on ImageNet has learned rich visual features from over one million images spanning one thousand categories. These features include edge detectors, texture recognizers, and shape analyzers that transfer well to new visual recognition tasks. Musical instruments, with their distinctive shapes and textures, are well-suited to classification using these transferred features.
+
+\subsection{Model Architecture}
+
+Our model architecture consists of the frozen ResNet50 base followed by a custom classification head designed for instrument recognition.
+
+The ResNet50 base processes input images through fifty convolutional layers organized into residual blocks. The output is a feature map of shape 7 by 7 by 2048, encoding rich semantic information about the image content. All weights in this base are frozen, meaning they are not updated during training.
+
+The custom classification head begins with a Global Average Pooling layer that reduces the 7 by 7 by 2048 feature map to a 2048-dimensional vector by averaging across spatial dimensions. This pooling operation provides translation invariance and dramatically reduces the number of parameters.
+
+Following pooling, a Dense layer with 512 units and ReLU activation provides capacity for learning task-specific feature combinations. Batch Normalization normalizes the activations, stabilizing training and enabling faster convergence. A Dropout layer with rate 0.5 randomly zeros half of the activations during training, providing strong regularization against overfitting.
+
+The final Dense layer has 30 units corresponding to the thirty instrument classes, with softmax activation producing a probability distribution over classes. The predicted class is the one with the highest probability.
+
+\subsection{Training Configuration and Hyperparameters}
+
+Training uses the Adam optimizer with a learning rate of 0.001. Adam combines the benefits of momentum and adaptive learning rates, automatically adjusting the step size for each parameter based on historical gradients. This makes it robust to the choice of learning rate and well-suited for transfer learning scenarios.
+
+The loss function is categorical cross-entropy, the standard choice for multi-class classification:
+
+$$\mathcal{L} = -\sum_{c=1}^{C} y_c \log(\hat{y}_c)$$
+
+where $y_c$ is the true label (one-hot encoded) and $\hat{y}_c$ is the predicted probability for class $c$. The computed class weights are passed to the training function, modifying the loss contribution of each sample based on its class.
+
+We employ an ImageDataGenerator with ResNet50's preprocessing function to efficiently load and preprocess batches during training. The generator also applies data augmentation including horizontal flipping and small rotations, increasing the effective training set size.
+
+Early stopping monitors validation accuracy with a patience of 5 epochs. If validation accuracy does not improve for five consecutive epochs, training terminates and the best weights are restored. This prevents overfitting by stopping before the model begins memorizing training examples.
+
+\section{Audio Classification Pipeline}
+
+\subsection{Dataset Selection: NSynth}
+
+For audio classification, we selected the NSynth dataset developed by Google Magenta. NSynth contains over 300,000 four-second audio samples of musical notes, each synthesized from real instruments at various pitches and velocities. The dataset is notable for its high quality: all samples are studio-quality recordings with consistent sampling rates, minimal background noise, and uniform loudness.
+
+The dataset organizes instruments into eleven families: bass, brass, flute, guitar, keyboard, mallet, organ, reed, string, synth\_lead, and vocal. This family-level classification presents a different challenge than specific instrument identification, requiring the model to learn the timbral characteristics that define each instrument family.
+
+\subsection{Data Preparation and CSV Generation}
+
+The NSynth dataset is distributed with train, validation, and test splits in separate directories. For our purposes, we chose to ignore this original separation and combine all data into a single pool, from which we create our own stratified splits. This approach gives us control over the split ratios and ensures consistent class distribution across splits.
+
+We developed a script that traverses the dataset directory structure, extracts audio file paths and their instrument family labels from the accompanying metadata, and generates a master CSV file. This CSV serves as the single source of truth for data loading throughout the pipeline.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{class-ditribution.png}
+    \caption{Class Distribution in the Audio Dataset}
+    \label{fig:audio_class_distribution}
+\end{figure}
+
+\subsection{Audio Visualization and Analysis}
+
+Before preprocessing, we visualized the audio data using multiple representations to understand its characteristics:
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{time-series.png}
+    \caption{Time Series Visualization of Audio Samples}
+    \label{fig:time_series}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{fourier-transforms.png}
+    \caption{Fourier Transform Analysis}
+    \label{fig:fourier_transforms}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{filter-bank-coefficients.png}
+    \caption{Filter Bank Coefficients}
+    \label{fig:filter_bank}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{mel-frequency-cepstrum-coefficients.png}
+    \caption{Mel-Frequency Cepstral Coefficients (MFCCs)}
+    \label{fig:mfcc}
+\end{figure}
+
+\subsection{Dead Space Removal}
+
+Analysis of the time series visualization revealed a significant problem: many audio samples contain substantial ``dead space'', periods of silence at the beginning or end of the recording where no instrument is playing. This dead space dilutes the useful audio content and can confuse the classification model.
+
+To address this, we implemented an Amplitude Envelope technique. The amplitude envelope traces a smooth curve outlining the extremes of the audio waveform. By analyzing this envelope, we can identify and remove quiet sections that fall below a threshold, retaining only the portions where the instrument is actively producing sound.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{Pasted image 20251224233405.png}
+    \caption{Comparison: Raw Audio vs. Cleaned Audio After Dead Space Removal}
+    \label{fig:dead_space_removal}
+\end{figure}
+
+After applying the amplitude envelope filter, we save the cleaned audio files for use during training. The normalized visualizations confirm that the preprocessing successfully removes dead space while preserving the meaningful audio content.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{time-series-norm.png}
+    \caption{Normalized Time Series After Preprocessing}
+    \label{fig:time_series_norm}
+\end{figure}
+
+\subsection{Why YAMNet}
+
+We selected YAMNet (Yet Another Mobile Network) as our audio feature extractor for several reasons. YAMNet is a pre-trained deep neural network that predicts audio events from the AudioSet ontology. Trained on over two million human-labeled ten-second YouTube video soundtracks, YAMNet has learned to recognize 521 different audio event classes.
+
+YAMNet's architecture is based on MobileNetV1, a lightweight convolutional network designed for efficiency. It takes audio waveforms as input, computes log-mel spectrograms internally, and produces embeddings that capture rich semantic information about the audio content. These 1024-dimensional embeddings serve as powerful features for downstream classification tasks.
+
+The key advantage of YAMNet is that it handles all audio preprocessing internally. It expects audio at 16,000 Hz sampling rate and processes it through a carefully designed spectrogram computation pipeline. By using YAMNet as a frozen feature extractor, we leverage the extensive training it received on AudioSet without requiring access to that massive dataset ourselves.
+
+\subsection{Feature Extraction with YAMNet}
+
+For each audio sample, YAMNet produces a sequence of 1024-dimensional embedding vectors, one for each approximately 0.96-second window with 0.48-second hop. For a four-second audio clip, this typically results in about 8 embedding vectors.
+
+To convert this variable-length sequence into a fixed-size representation suitable for classification, we average the embeddings across all time windows:
+
+$$\mathbf{e}_{avg} = \frac{1}{T} \sum_{t=1}^{T} \mathbf{e}_t$$
+
+where $\mathbf{e}_t$ is the embedding for time window $t$ and $T$ is the total number of windows. This average embedding captures the overall acoustic characteristics of the sample while being invariant to the exact timing of events within the clip.
+
+\subsection{Classification Head Architecture}
+
+The classification head that operates on YAMNet embeddings is a carefully designed feed-forward neural network. The architecture is as follows:
+
+The input layer accepts the 1024-dimensional averaged embedding vector from YAMNet.
+
+Hidden Layer 1 is a Dense layer with 1024 units, followed by Batch Normalization, ReLU activation, and Dropout with rate 0.3. This layer maintains the dimensionality while learning task-specific transformations of the embedding features.
+
+Hidden Layer 2 is a Dense layer with 512 units, followed by Batch Normalization, ReLU activation, and Dropout with rate 0.3. This layer begins reducing dimensionality while extracting higher-level patterns.
+
+Hidden Layer 3 is a Dense layer with 256 units, followed by Batch Normalization, ReLU activation, and Dropout with rate 0.3. This layer further compresses the representation toward the final classification.
+
+The Output Layer is a Dense layer with 11 units (one per instrument family) with softmax activation, producing probability distributions over classes.
+
+This architecture progressively reduces dimensionality from 1024 to 11, with each layer learning increasingly abstract representations. Batch Normalization after each dense layer stabilizes training, while Dropout provides regularization against overfitting.
+
+\subsection{Training Configuration}
+
+Training uses the Adam optimizer with standard hyperparameters. The data is split into 80\% training, 10\% validation, and 10\% test sets using stratified sampling to preserve class distributions.
+
+We monitor validation accuracy during training and employ early stopping to prevent overfitting. Model checkpointing saves the best weights based on validation performance.
+
+Before training began, we randomly removed 20 samples from the dataset to use as a completely held-out test set for final evaluation. These samples were never seen during any part of the training process, providing an unbiased assessment of generalization.
+
+\section{Evaluation Strategy}
+
+Both models are evaluated using multiple metrics to provide a comprehensive view of performance. Accuracy measures the overall proportion of correct predictions. The confusion matrix reveals which classes are most commonly confused with each other. Precision and recall, computed per class, capture different aspects of classification quality, while the F1 score provides a balanced summary.
+
+For the audio model, we additionally test on the 20 held-out samples that were removed before training, verifying that the model generalizes to completely unseen data.

@@ -1,0 +1,105 @@
+\chapter{Tools \& Environments}
+
+This chapter presents the technological stack selected for the Musical Instrument Classification platform. Each tool was chosen to address specific requirements of deep learning systems, emphasizing performance, modularity, and user experience.
+
+\section{Deep Learning Framework}
+
+\subsection{TensorFlow and Keras}
+
+TensorFlow serves as the foundational deep learning framework for this project. Developed by Google Brain and released as open source in 2015, TensorFlow provides a comprehensive ecosystem for building, training, and deploying machine learning models. Its computational graph architecture enables efficient execution across CPUs, GPUs, and TPUs, making it suitable for both research experimentation and production deployment.
+
+Keras, now fully integrated into TensorFlow as its high-level API, provides an intuitive interface for defining neural network architectures. The Sequential and Functional APIs allow developers to specify model architectures declaratively, with layers stacked or connected as needed. For our project, we use Keras extensively to define custom classification heads that sit atop pre-trained feature extractors.
+
+The combination of TensorFlow and Keras enables a workflow where models can be prototyped rapidly in Jupyter notebooks, then exported as standardized artifacts for serving. We save our trained models in the Keras format, which preserves both the architecture and learned weights in a single file that can be loaded for inference with minimal code.
+
+\subsection{TensorFlow Hub}
+
+TensorFlow Hub provides a repository of pre-trained model components that can be incorporated into new applications. For our audio classification pipeline, we rely on the YAMNet model available through TensorFlow Hub. This model, trained on the AudioSet dataset comprising over two million ten-second audio clips, produces embeddings that capture rich semantic information about audio content.
+
+Loading a model from TensorFlow Hub requires only a single line of code specifying the model URL. The library handles downloading the model artifacts, caching them locally, and wrapping them in a Keras-compatible layer. This abstraction allows us to use YAMNet as a preprocessing layer in our pipeline without managing the complexities of the underlying model architecture.
+
+\section{Data Processing and Visualization}
+
+\subsection{Pandas and NumPy}
+
+Data manipulation in our pipeline relies on Pandas and NumPy, the foundational libraries for numerical computing in Python. Pandas provides the DataFrame abstraction for tabular data, enabling intuitive operations for filtering, grouping, and transforming datasets. We use Pandas extensively for managing metadata about our training samples, including file paths, class labels, and data splits.
+
+NumPy provides the underlying array operations that Pandas and TensorFlow build upon. When processing images or audio signals, the data ultimately flows through NumPy arrays before conversion to TensorFlow tensors. The broadcasting and vectorization capabilities of NumPy enable efficient batch processing without explicit loops.
+
+\subsection{Matplotlib and Seaborn}
+
+Visualization is essential for understanding model behavior and communicating results. Matplotlib provides the low-level plotting primitives upon which other visualization libraries are built. We use Matplotlib to generate training history plots that show how loss and accuracy evolve across epochs, providing insight into whether models are converging appropriately or exhibiting signs of overfitting.
+
+Seaborn builds on Matplotlib to provide higher-level statistical visualization functions. We rely on Seaborn for generating confusion matrices, heatmaps that reveal which classes the model confuses with each other. The color-coded representation makes it immediately apparent where classification errors concentrate, guiding potential improvements to data collection or augmentation strategies.
+
+\subsection{Librosa}
+
+For audio signal processing, we employ Librosa, a Python library specifically designed for music and audio analysis. Librosa provides functions for loading audio files, resampling to consistent sample rates, and computing spectral features. While YAMNet handles much of the audio feature extraction in our pipeline, Librosa plays a role in preprocessing and analysis.
+
+The library supports a wide range of audio formats through its integration with the underlying audioread and soundfile libraries. This flexibility allows our pipeline to handle WAV, MP3, FLAC, and other common audio formats without format-specific code paths.
+
+\section{Backend Infrastructure}
+
+\subsection{FastAPI}
+
+FastAPI serves as the web framework for our classification API. This modern Python framework combines exceptional performance with outstanding developer experience. Built on Starlette for asynchronous request handling and Pydantic for automatic data validation, FastAPI can process concurrent classification requests efficiently.
+
+The framework automatically generates OpenAPI documentation from Python type hints, producing an interactive Swagger UI where developers can explore endpoints and test requests directly in the browser. For our classification API, this documentation serves both as development reference and as a tool for testing the prediction endpoints during development.
+
+Our API exposes endpoints for single-image classification, single-audio classification, and batch processing modes for each modality. FastAPI's dependency injection system allows clean separation of concerns, with shared components like model loading handled through injectable dependencies.
+
+\subsection{Pydantic}
+
+Pydantic provides the data validation layer for our API. Request bodies are automatically validated against schema definitions, with meaningful error messages returned when validation fails. Response models ensure that our API returns consistent, well-typed data structures.
+
+Beyond validation, Pydantic handles serialization and deserialization between Python objects and JSON. Prediction results, including class probabilities and confidence scores, are packaged into Pydantic models that serialize cleanly for transmission to frontend clients.
+
+\subsection{Python Multipart}
+
+Handling file uploads in a web API requires parsing multipart form data, the encoding used when browsers submit files through forms. The python-multipart library, integrated with FastAPI, handles this parsing transparently. Users can upload image or audio files through standard HTTP POST requests, and our endpoint handlers receive the file content as Python objects ready for processing.
+
+\section{Frontend Technologies}
+
+\subsection{React and TypeScript}
+
+The frontend application is built with React, a JavaScript library for building component-based user interfaces. React's declarative approach allows us to describe the interface as a function of application state, with the framework handling the efficient updating of the DOM when state changes. For our application, this paradigm works well for representing classification states, from initial upload through processing to result display.
+
+TypeScript adds static typing to JavaScript, catching errors at compile time that would otherwise surface only at runtime. The type definitions for our API responses ensure that frontend code correctly handles the structure of prediction results. Type safety also improves the development experience through enhanced autocompletion and inline documentation.
+
+\subsection{Vite}
+
+Vite serves as the build tool and development server for our frontend. Unlike traditional bundlers that rebuild the entire application on each change, Vite leverages native ES modules to serve source files directly during development, with hot module replacement providing near-instantaneous updates. For production builds, Vite uses Rollup to produce optimized bundles with code splitting and tree shaking.
+
+The speed of Vite's development server dramatically improves the iteration cycle when developing user interface components. Changes to styles, components, or logic appear in the browser almost immediately, enabling a tight feedback loop during development.
+
+\subsection{TailwindCSS}
+
+Styling is handled through TailwindCSS, a utility-first CSS framework. Rather than writing custom stylesheets with semantic class names, TailwindCSS provides low-level utility classes that compose to create complex designs. Classes like \texttt{flex}, \texttt{gap-4}, and \texttt{rounded-lg} apply single CSS properties, combining in the markup to achieve the desired appearance.
+
+This approach enables rapid prototyping and ensures consistency across the application. The framework includes a design system with predefined spacing, color, and typography scales. Our application uses the shadcn/ui component library, which provides accessible, well-designed components built on TailwindCSS and Radix primitives.
+
+\subsection{TanStack React Query}
+
+Managing server state in React applications requires careful attention to caching, synchronization, and background updates. TanStack React Query provides abstractions for these concerns, handling the complexity of data fetching while exposing a simple hook-based API. Our classification hooks use React Query to manage API requests, caching results and providing loading and error states.
+
+The library distinguishes between server state, data owned by the backend and fetched asynchronously, and client state, ephemeral UI state managed locally. This separation clarifies the mental model for data management and ensures that cached server state remains synchronized with the source of truth.
+
+\subsection{WaveSurfer.js}
+
+For audio visualization, we integrate WaveSurfer.js, a library that renders audio waveforms in the browser. When users upload audio files for classification, WaveSurfer.js displays the waveform alongside playback controls. This visualization provides immediate feedback that the file was loaded correctly and allows users to preview the audio before or after classification.
+
+The library supports customizable appearance, allowing the waveform colors and dimensions to match our application design. Playback integration enables users to click anywhere on the waveform to seek to that position, providing an intuitive audio navigation experience.
+
+\section{Containerization and Deployment}
+
+\subsection{Docker}
+
+Docker containerization ensures consistent execution across development and production environments. Each component of our application is packaged as a Docker image containing the exact dependencies and configuration required. The multi-stage build process optimizes image sizes by separating build-time dependencies from runtime requirements.
+
+For the backend, the Docker image installs Python dependencies, copies the application code, and configures the Uvicorn server to serve the FastAPI application. For the frontend, a Node.js build stage compiles the React application, and the resulting static files are served by Nginx in the final image.
+
+\subsection{Docker Compose}
+
+Docker Compose orchestrates the multi-container application, defining the backend API and frontend services along with their networking configuration. A single \texttt{docker compose up} command brings the entire stack online, with containers communicating through an internal network. The Compose file specifies environment variables, port mappings, and volume mounts for each service.
+
+This orchestration simplifies both development and deployment. Developers can run the complete stack locally with a single command, while production deployment follows the same pattern on server infrastructure. The consistency between environments reduces deployment surprises and enables reliable testing.

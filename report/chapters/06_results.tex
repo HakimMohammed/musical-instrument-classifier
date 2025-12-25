@@ -1,0 +1,238 @@
+\chapter{Results \& Discussion}
+
+This chapter presents the outcomes of the Musical Instrument Classification platform development, examining both the image and audio model performance through quantitative metrics, training evolution graphs, confusion matrix analysis, and evaluation of the complete system.
+
+\section{Image Classification Results}
+
+The ResNet50-based image classification model was trained on the Musical Instruments Image Dataset, which contains photographs across thirty instrument categories. The model demonstrates strong performance, achieving metrics that validate the effectiveness of the transfer learning approach.
+
+\subsection{Performance Metrics}
+
+The final evaluation on the held-out test set reveals excellent classification accuracy. The model achieves an overall accuracy of 96.17\%, correctly identifying the vast majority of instrument images. This performance is particularly impressive considering the diversity of the thirty classes and the visual similarities between certain instrument families.
+
+The weighted precision of 96.20\% indicates that when the model predicts a specific instrument class, it is correct with high probability. The weighted recall of 96.17\% demonstrates that the model successfully identifies most instances of each class in the test set. The weighted F1 score of 96.12\% provides a balanced measure confirming the model's overall reliability across all classes.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|c|}
+\hline
+\textbf{Metric} & \textbf{Value} \\
+\hline
+Accuracy & 96.17\% \\
+Precision (Weighted) & 96.20\% \\
+Recall (Weighted) & 96.17\% \\
+F1 Score (Weighted) & 96.12\% \\
+\hline
+\end{tabular}
+\caption{Image Model Performance Metrics}
+\label{tab:image_metrics}
+\end{table}
+
+\subsection{Confusion Matrix Analysis}
+
+The confusion matrix provides detailed insight into the model's classification behavior across all thirty instrument classes. Analysis reveals that the model achieves near-perfect classification for most instruments while showing expected confusion between visually similar instruments.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{confusion-matrix-image.png}
+    \caption{Image Classification Confusion Matrix}
+    \label{fig:image_confusion_matrix}
+\end{figure}
+
+Instruments with highly distinctive visual features, such as the harp with its triangular frame and strings, or the piano with its keyboard layout, achieve close to perfect classification accuracy. The model shows strong performance on instruments like the accordion, alphorn, and bagpipes, each of which possesses unique visual characteristics that transfer learning effectively captures.
+
+Some confusion exists between instruments within the same family or with similar shapes. String instruments with similar body proportions occasionally confuse the classifier, though the overall error rate remains low. The diagonal dominance in the confusion matrix confirms that the vast majority of predictions fall on the correct class.
+
+\subsection{Training Evolution}
+
+The training process was monitored across epochs to understand the model's learning dynamics and detect any signs of overfitting.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{train-val-accuraccy-and-loss-plots-image.png}
+    \caption{Image Model Training: Accuracy and Loss Evolution}
+    \label{fig:image_training}
+\end{figure}
+
+The accuracy evolution graph shows rapid initial learning as the model adapts the pre-trained ResNet50 features to the instrument classification task. Training accuracy climbs steadily while validation accuracy follows closely, indicating effective generalization. The small gap between training and validation accuracy demonstrates that the dropout and early stopping strategies successfully prevent overfitting.
+
+The training plots confirm smooth optimization throughout training. Both training and validation metrics improve consistently, with the validation values stabilizing at high accuracy and low loss. The absence of divergence between training and validation curves indicates that the model generalizes well to unseen examples rather than memorizing the training set.
+
+\subsection{Test Case Examples}
+
+To validate the model's performance on individual samples, we tested it on images from the test set and visualized the predictions.
+
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}[b]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{dulcimer-success-test-case-sample.png}
+        \caption{Dulcimer}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{harmonica-success-test-case-sample.png}
+        \caption{Harmonica}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{trumpet-success-test-case-sample.png}
+        \caption{Trumpet}
+    \end{subfigure}
+    \caption{Successful Test Case Predictions for Various Instruments}
+    \label{fig:image_test_cases}
+\end{figure}
+
+These examples demonstrate that the model correctly identifies instruments with varying visual characteristics, from the wooden body of the dulcimer to the brass construction of the trumpet.
+
+\section{Audio Classification Results}
+
+The YAMNet-based audio classification model was trained on the NSynth dataset, categorizing instrument sounds into eleven distinct families. The embedding-based approach proves highly effective for this task.
+
+\subsection{Performance Metrics}
+
+The audio classifier achieves excellent performance in distinguishing between instrument families. The overall accuracy of 96.23\% demonstrates that the YAMNet embeddings capture sufficient acoustic information to reliably differentiate between instrument timbres.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|c|}
+\hline
+\textbf{Metric} & \textbf{Value} \\
+\hline
+Accuracy & 96.23\% \\
+Precision (Weighted) & 96.19\% \\
+Recall (Weighted) & 96.23\% \\
+F1 Score (Weighted) & 96.19\% \\
+\hline
+\end{tabular}
+\caption{Audio Model Performance Metrics}
+\label{tab:audio_metrics}
+\end{table}
+
+The balanced precision and recall indicate that the model performs consistently across instrument families without bias toward predicting certain classes more frequently than others.
+
+\subsection{Confusion Matrix Analysis}
+
+The confusion matrix for audio classification reveals the relationships between different instrument families from an acoustic perspective.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{confusion-matrix-audio.png}
+    \caption{Audio Classification Confusion Matrix}
+    \label{fig:audio_confusion_matrix}
+\end{figure}
+
+Instrument families with distinctive acoustic characteristics achieve excellent classification rates. The brass family, characterized by its bright, resonant timbres, is rarely confused with other families. Similarly, the mallet family, with its percussive attack transients, stands out clearly in the acoustic embedding space.
+
+Some confusion appears between families with overlapping acoustic properties. The organ and keyboard families share sustained tones with controllable dynamics, leading to occasional misclassification between these categories. The string and guitar families, while distinct in playing technique, share certain timbral qualities that the model sometimes conflates.
+
+These confusions reflect genuine acoustic similarities rather than model failures. In many cases, the confused instruments share physical properties that influence their sound production, making the boundary between families genuinely ambiguous even to trained human listeners.
+
+\subsection{Training Evolution}
+
+The audio model training process shows efficient learning from the YAMNet embeddings.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{train-val-accuraccy-and-loss-plots-audio.png}
+    \caption{Audio Model Training: Accuracy and Loss Evolution}
+    \label{fig:audio_training}
+\end{figure}
+
+The accuracy evolution demonstrates rapid convergence, with the model achieving high accuracy within the first few epochs. This fast learning is characteristic of training on pre-computed embeddings, where the feature extraction burden has already been handled by YAMNet. The classifier simply needs to learn the mapping from the semantic embedding space to the instrument family labels.
+
+The training curves confirm smooth optimization with good generalization. The validation metrics closely track the training metrics throughout training, indicating that the model complexity is appropriate for the task and the dropout regularization is effective.
+
+\subsection{Held-Out Test Results}
+
+Before training began, we randomly removed 20 samples from the dataset to use as a completely independent test set. After training, we evaluated the model on these 20 samples. The model correctly classified all 20 samples, achieving 100\% accuracy on this held-out set. This result confirms that the model generalizes well to unseen data from the same distribution.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{prediction-results-audio.png}
+    \caption{Audio Model Prediction Results on Test Samples}
+    \label{fig:audio_predictions}
+\end{figure}
+
+\section{Comparative Analysis}
+
+Comparing the image and audio classification results provides interesting insights into the two modalities.
+
+Both models achieve remarkably similar accuracy levels, with the image model at 96.17\% and the audio model at 96.23\%. This near-equivalence suggests that both visual and acoustic features provide comparably rich information for instrument identification, at least within the scope of the classes considered.
+
+The image model operates on thirty fine-grained instrument classes, while the audio model operates on eleven broader family categories. Despite classifying fewer categories, the audio task is not necessarily simpler because the acoustic variation within instrument families can be substantial. A synthesizer and an acoustic piano both belong to the keyboard family, yet their timbral characteristics differ dramatically.
+
+The transfer learning approach proved equally effective for both modalities. ResNet50 features, originally learned for general image classification, transfer well to musical instruments. YAMNet embeddings, originally learned for general audio classification, transfer well to instrument family recognition. This confirms the power of transfer learning for domain-specific applications where collecting massive training datasets would be impractical.
+
+\section{System Integration Results}
+
+Beyond individual model performance, the integrated system successfully serves predictions through the FastAPI backend and React frontend.
+
+\subsection{API Performance}
+
+The FastAPI backend provides REST endpoints for both image and audio classification. The Swagger documentation interface enables developers to explore and test the API directly.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{openapi-docs-interface-that-shows-the-endpoints-and-test-them-on-browser.png}
+    \caption{OpenAPI Documentation Interface}
+    \label{fig:api_docs}
+\end{figure}
+
+The API responds to classification requests with latencies typically under one second for images and under two seconds for audio files, depending on file size. The longer audio processing time reflects the additional steps of resampling and embedding extraction required before classification.
+
+\subsection{Frontend Application}
+
+The React frontend delivers an intuitive user experience for uploading and classifying files.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{ui-first-page.png}
+    \caption{Frontend Application Interface}
+    \label{fig:ui_main}
+\end{figure}
+
+The interface supports both image and audio file uploads, with visual feedback during processing and clear presentation of classification results. The WaveSurfer.js integration provides effective audio visualization and playback.
+
+\subsection{End-to-End Testing}
+
+We tested the complete pipeline from frontend through backend to model inference.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{image-prediction-test.png}
+    \caption{End-to-End Image Classification Test}
+    \label{fig:image_e2e_test}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{audio-prediction-test.png}
+    \caption{End-to-End Audio Classification Test}
+    \label{fig:audio_e2e_test}
+\end{figure}
+
+\subsection{Docker Deployment}
+
+The Docker containerization enables consistent deployment across development and production environments. The docker-compose configuration brings up both backend and frontend services.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{docer-compose-up-terminal-result.png}
+    \caption{Docker Compose Deployment}
+    \label{fig:docker_deployment}
+\end{figure}
+
+The multi-stage builds produce compact images that start quickly and consume reasonable memory, even with the TensorFlow models loaded.
+
+\section{Discussion}
+
+The results validate the effectiveness of our approach to musical instrument classification. Both models achieve accuracy exceeding ninety-six percent, demonstrating that transfer learning from large pre-trained models enables strong performance even with domain-specific training data.
+
+The confusion patterns observed in both modalities align with human intuition about instrument similarity. Visually similar instruments confuse the image model; acoustically similar instruments confuse the audio model. These patterns suggest that the models have learned meaningful representations of instrument characteristics rather than superficial shortcuts.
+
+The parallel development of image and audio classification demonstrates the versatility of modern deep learning frameworks. The same Keras API, the same training callbacks, and the same evaluation methodology apply across both modalities, differing only in the specific preprocessing and model architecture details.
+
+However, as we will discuss in the next chapter, our journey was not without significant challenges. While the image classification model generalized well to real-world data, the audio classification model exhibited severe limitations when tested on audio samples from outside the NSynth distribution. This domain mismatch problem led us to explore several solutions and ultimately revealed important lessons about the challenges of audio classification in production environments.
